@@ -15,8 +15,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🚛 VTCS & GPS Tracking Auditor")
-st.markdown("Automated Weight, Time, and GPS Validation for Sargodha Operations")
+st.title("🚛 VTCS Tracking Auditor")
+st.markdown("Automated Weight, Time, and GPS Validation Operations")
 
 # --- SIDEBAR ---
 st.sidebar.header("📂 Data Upload")

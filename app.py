@@ -1,109 +1,128 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from datetime import timedelta
 
-# Page Configuration
-st.set_page_config(page_title="VTCS & GPS Auditor", layout="wide")
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="VTCS Auditor Pro", layout="wide", initial_sidebar_state="expanded")
+
+# --- CUSTOM CSS FOR BETTER UI ---
+st.markdown("""
+    <style>
+    .main { background-color: #f5f7f9; }
+    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .status-card { padding: 20px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e6e9ef; }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.title("🚛 VTCS & GPS Tracking Auditor")
+st.markdown("Automated Weight, Time, and GPS Validation for Sargodha Operations")
 
-# --- SIDEBAR: FILE UPLOADS ---
-st.sidebar.header("Upload Data")
-vtcs_file = st.sidebar.file_uploader("1. Upload VTCS Data (Excel/CSV)", type=['xlsx', 'csv'])
-tracking_file = st.sidebar.file_uploader("2. Upload Tracking Report (Excel/CSV)", type=['xlsx', 'csv'])
+# --- SIDEBAR ---
+st.sidebar.header("📂 Data Upload")
+vtcs_file = st.sidebar.file_uploader("Upload VTCS Portal Data", type=['xlsx', 'csv'])
+tracking_file = st.sidebar.file_uploader("Upload Tracking Report", type=['xlsx', 'csv'])
+st.sidebar.info("Tracking Format: Time, Engine, Speed, Status, ODO, Lat, Long, Location")
 
 def process_audit(vtcs_df, track_df=None):
-    # --- 1. VTCS PROCESSING ---
-    # Weight Conversion
-    cols_to_fix = ['Waste Collected (Kg)', 'Before Weight', 'After Weight (Kg)']
-    for col in cols_to_fix:
+    # 1. VTCS Cleaning
+    for col in ['Waste Collected (Kg)', 'Before Weight', 'After Weight (Kg)']:
         if col in vtcs_df.columns:
             vtcs_df[col] = pd.to_numeric(vtcs_df[col].astype(str).str.replace(',', ''), errors='coerce')
     
     vtcs_df['Tonnage'] = vtcs_df['Waste Collected (Kg)'] / 1000
-    
-    # Time Conversion (Portal format: Mar 17, 2026, 2:01:12 PM)
     vtcs_df['Time In'] = pd.to_datetime(vtcs_df['Time In'], errors='coerce')
     vtcs_df['Time Out'] = pd.to_datetime(vtcs_df['Time Out'], errors='coerce')
     
-    # 30-Minute Logic (Above 30 is Suspicious)
+    # Time Logic: > 30m is Suspicious
     vtcs_df['Duration_Mins'] = (vtcs_df['Time Out'] - vtcs_df['Time In']).dt.total_seconds() / 60
     vtcs_df['Time_Status'] = vtcs_df['Duration_Mins'].apply(lambda x: "🚨 Suspicious (>30m)" if x > 30 else "✅ Normal")
 
-    # --- 2. GPS TRACKING CROSS-CHECK ---
+    # 2. Advanced GPS Cross-Check with 2-Minute Grace Period
     if track_df is not None:
-        # Standardize Tracking Columns
-        # We assume tracking has 'Vehicle', 'Time', and 'Status'
-        track_df['Time'] = pd.to_datetime(track_df.iloc[:, 1], errors='coerce') # Assuming 2nd column is time
-        track_df.columns = [c.strip() for c in track_df.columns]
+        # Standardize Tracking Columns based on your new format
+        track_df.columns = ['Time', 'Engine', 'Speed', 'Status', 'ODO', 'Lat', 'Long', 'Location']
+        track_df['Time'] = pd.to_datetime(track_df['Time'], errors='coerce')
         
-        # Merge Logic: Find GPS status at VTCS 'Time In'
-        # To handle seconds difference, we round to nearest minute
-        vtcs_df['Match_Time'] = vtcs_df['Time In'].dt.floor('min')
-        track_df['Match_Time'] = track_df['Time'].dt.floor('min')
+        gps_results = []
         
-        # Merge VTCS with Tracking on Vehicle and Time
-        merged = pd.merge(
-            vtcs_df, 
-            track_df[['Vehicle', 'Match_Time', 'Status']], 
-            on=['Vehicle', 'Match_Time'], 
-            how='left'
-        )
-        
-        # IDLE Logic: Check if GPS status matches "Idle" at Portal entry time
-        def check_idle(row):
-            gps_status = str(row['Status']).lower()
-            if 'idle' in gps_status:
-                return "✅ Verified (Idle)"
-            elif 'moving' in gps_status or 'active' in gps_status:
-                return "❌ Conflict (Moving)"
-            else:
-                return "❓ No GPS Data"
+        for idx, row in vtcs_df.iterrows():
+            v_id = row['Vehicle']
+            t_in = row['Time In']
+            
+            if pd.isnull(t_in):
+                gps_results.append("❓ Invalid Time")
+                continue
 
-        merged['GPS_Audit'] = merged.apply(check_idle, axis=1)
-        return merged
-    
+            # Filter tracking for same vehicle
+            v_track = track_df[track_df['Location'].str.contains(str(v_id), na=False) | (track_df.index >= 0)] 
+            # Note: For best results, ensure 'Vehicle' column exists in GPS too. 
+            # Here we search for the closest time ping overall.
+            
+            # Find pings within +/- 2 minutes of VTCS Time In
+            mask = (track_df['Time'] >= t_in - timedelta(minutes=2)) & \
+                   (track_df['Time'] <= t_in + timedelta(minutes=2))
+            
+            nearby_pings = track_df[mask]
+            
+            if nearby_pings.empty:
+                gps_results.append("❓ No GPS Data")
+            else:
+                # If any ping in that 4-minute window shows "Idle", we accept it
+                statuses = nearby_pings['Status'].astype(str).str.lower().values
+                if any('idle' in s for s in statuses):
+                    gps_results.append("✅ Verified (Idle)")
+                else:
+                    gps_results.append("❌ Conflict (Moving)")
+        
+        vtcs_df['GPS_Audit'] = gps_results
+
     return vtcs_df
 
 if vtcs_file:
     df_vtcs = pd.read_excel(vtcs_file) if vtcs_file.name.endswith('xlsx') else pd.read_csv(vtcs_file)
-    
     df_track = None
     if tracking_file:
         df_track = pd.read_excel(tracking_file) if tracking_file.name.endswith('xlsx') else pd.read_csv(tracking_file)
     
-    # Run the Audit
     results = process_audit(df_vtcs, df_track)
 
-    # --- DASHBOARD UI ---
-    st.header("📋 Audit Dashboard")
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Total Tonnage (Day)", f"{results['Tonnage'].sum():.2f} Tons")
-    m2.metric("Delayed Trips (>30m)", len(results[results['Time_Status'].str.contains("🚨")]))
-    
-    if 'GPS_Audit' in results.columns:
-        conflicts = len(results[results['GPS_Audit'] == "❌ Conflict (Moving)"])
-        m3.metric("GPS Conflicts", conflicts)
+    # --- TOP METRICS ---
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
+        st.metric("Total Trips", len(results))
+    with m2:
+        st.metric("Total Weight", f"{results['Tonnage'].sum():.2f} Tons")
+    with m3:
+        delayed = len(results[results['Time_Status'].str.contains("🚨")])
+        st.metric("Delayed Trips", delayed, delta_color="inverse")
+    with m4:
+        if 'GPS_Audit' in results.columns:
+            conflicts = len(results[results['GPS_Audit'] == "❌ Conflict (Moving)"])
+            st.metric("GPS Conflicts", conflicts)
 
-    # Vehicle Table
-    st.subheader("Vehicle Summary")
-    summary = results.groupby('Vehicle').agg({'Tonnage': 'sum', 'Data ID': 'count'}).rename(columns={'Data ID': 'Trips'})
-    st.table(summary)
+    # --- MAIN VIEW ---
+    tab1, tab2 = st.tabs(["📊 Detailed Audit Log", "🚛 Vehicle Summary"])
 
-    # Main Data Table
-    st.subheader("Detailed Logs")
-    
-    # Column selection for cleaner view
-    display_cols = ['Vehicle', 'Time In', 'Time Out', 'Duration_Mins', 'Tonnage', 'Time_Status']
-    if 'GPS_Audit' in results.columns:
-        display_cols.append('GPS_Audit')
+    with tab1:
+        st.subheader("Real-time Validation Table")
+        
+        # UI Styling function
+        def style_output(row):
+            styles = [''] * len(row)
+            if "🚨" in str(row['Time_Status']): styles[results.columns.get_loc('Time_Status')] = 'background-color: #ffe6e6'
+            if "GPS_Audit" in row and "❌" in str(row['GPS_Audit']): styles[results.columns.get_loc('GPS_Audit')] = 'background-color: #ffe6e6'
+            if "GPS_Audit" in row and "✅" in str(row['GPS_Audit']): styles[results.columns.get_loc('GPS_Audit')] = 'background-color: #e6ffed'
+            return styles
 
-    # Color highlighting
-    def color_rows(val):
-        if '🚨' in str(val) or '❌' in str(val): return 'background-color: #ffcccc'
-        if '✅' in str(val): return 'background-color: #ccffcc'
-        return ''
+        st.dataframe(results.style.apply(style_output, axis=1), use_container_width=True)
 
-    st.dataframe(results[display_cols].style.applymap(color_rows), use_container_width=True)
+    with tab2:
+        st.subheader("Tonnage per Vehicle")
+        v_sum = results.groupby('Vehicle').agg({'Tonnage': 'sum', 'Duration_Mins': 'mean', 'Data ID': 'count'})
+        v_sum.columns = ['Total Tons', 'Avg Duration (Min)', 'Trip Count']
+        st.bar_chart(v_sum['Total Tons'])
+        st.table(v_sum.style.format("{:.2f}"))
 
 else:
-    st.info("Please upload your VTCS file from the sidebar to start.")
+    st.info("👋 Welcome! Please upload your VTCS Excel file in the sidebar to begin the audit.")

@@ -2,20 +2,23 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import timedelta
+import io
 
 # --- PAGE CONFIG ---
-st.set_page_config(page_title="VTCS & AskTech Auditor", layout="wide")
+st.set_page_config(page_title="VTCS & GPS Auditor", layout="wide")
 
-st.title("🚛 VTCS & AskTech Tracker Auditor")
-st.markdown("Reconciling Portal entries with AskTech (Pvt) Ltd. Tracking Reports")
+st.title("🚛 VTCS & GPS Tracking Auditor")
 
 # --- SIDEBAR ---
-st.sidebar.header("📂 Data Upload")
-vtcs_file = st.sidebar.file_uploader("1. Upload VTCS Portal Data", type=['xlsx', 'csv'])
-tracking_file = st.sidebar.file_uploader("2. Upload AskTech Tracking Report", type=['xlsx', 'csv'])
+st.sidebar.header("Upload Data")
+vtcs_file = st.sidebar.file_uploader("1. Upload VTCS Data (Excel/CSV)", type=['xlsx', 'csv'])
+tracking_file = st.sidebar.file_uploader("2. Upload Tracking Report (Excel/CSV)", type=['xlsx', 'csv'])
+
+def convert_df_to_csv(df):
+    return df.to_csv(index=True if 'Vehicle' in df.index.names else False).encode('utf-8')
 
 def process_audit(vtcs_df, track_df=None):
-    # --- 1. VTCS PROCESSING (Kept identical to your working version) ---
+    # --- 1. VTCS PROCESSING ---
     for col in ['Waste Collected (Kg)', 'Before Weight', 'After Weight (Kg)']:
         if col in vtcs_df.columns:
             vtcs_df[col] = pd.to_numeric(vtcs_df[col].astype(str).str.replace(',', ''), errors='coerce')
@@ -24,89 +27,108 @@ def process_audit(vtcs_df, track_df=None):
     vtcs_df['Time In'] = pd.to_datetime(vtcs_df['Time In'], errors='coerce')
     vtcs_df['Time Out'] = pd.to_datetime(vtcs_df['Time Out'], errors='coerce')
     
-    # 30-minute Logic: Above 30 is Suspicious
     vtcs_df['Duration_Mins'] = (vtcs_df['Time Out'] - vtcs_df['Time In']).dt.total_seconds() / 60
     vtcs_df['Time_Status'] = vtcs_df['Duration_Mins'].apply(lambda x: "🚨 Suspicious (>30m)" if x > 30 else "✅ Normal")
 
-    # --- 2. UPDATED TRACKING CROSS-CHECK (For AskTech Format) ---
+    # --- 2. TRACKING CROSS-CHECK ---
     if track_df is not None:
-        # Standardize Tracking Columns based on your image
+        # Auto-detect header if not at top
+        if 'Time' not in [str(c).strip() for c in track_df.columns]:
+            for i in range(min(len(track_df), 20)):
+                row_values = [str(val).strip() for val in track_df.iloc[i].values]
+                if 'Time' in row_values:
+                    track_df.columns = row_values
+                    track_df = track_df.iloc[i+1:].reset_index(drop=True)
+                    break
+        
         track_df.columns = [str(c).strip() for c in track_df.columns]
         
-        # Ensure we have the 'Time' and 'Status' columns from your tracker
         if 'Time' in track_df.columns and 'Status' in track_df.columns:
             track_df['Time'] = pd.to_datetime(track_df['Time'], errors='coerce')
             
             gps_audit_results = []
-            
             for idx, row in vtcs_df.iterrows():
                 target_time = row['Time In']
-                
                 if pd.isnull(target_time):
-                    gps_audit_results.append("❓ Invalid VTCS Time")
+                    gps_audit_results.append("❓ Invalid Time")
                     continue
 
-                # 2-Minute Grace Period Logic (+/- 2 mins)
                 mask = (track_df['Time'] >= target_time - timedelta(minutes=2)) & \
                        (track_df['Time'] <= target_time + timedelta(minutes=2))
                 
                 nearby_pings = track_df[mask]
                 
                 if nearby_pings.empty:
-                    gps_audit_results.append("❓ No GPS Data Found")
+                    gps_audit_results.append("❓ No GPS Data")
                 else:
-                    # In your image: 'Parked' and 'Idle' are both stationary
                     statuses = nearby_pings['Status'].astype(str).str.lower().values
-                    is_valid = any(('idle' in s or 'parked' in s) for s in statuses)
-                    
-                    if is_valid:
-                        gps_audit_results.append("✅ Verified (Idle/Parked)")
-                    else:
-                        gps_audit_results.append("❌ Conflict (Moving)")
+                    is_valid = any(('idle' in s or 'parked' in s or 'stopped' in s) for s in statuses)
+                    gps_audit_results.append("✅ Verified (Idle)" if is_valid else "❌ Conflict (Moving)")
             
             vtcs_df['GPS_Audit'] = gps_audit_results
         else:
-            st.error("Tracking report columns must include 'Time' and 'Status'.")
+            st.sidebar.error("Could not detect 'Time' and 'Status' in Tracking file.")
 
     return vtcs_df
 
 if vtcs_file:
-    # VTCS Loading
     df_vtcs = pd.read_excel(vtcs_file) if vtcs_file.name.endswith('xlsx') else pd.read_csv(vtcs_file)
     
-    # Tracking Loading
     df_track = None
     if tracking_file:
-        # AskTech reports have a header at the top. 
-        # We start reading from where the actual data table begins.
-        df_track = pd.read_excel(tracking_file, skiprows=18) 
-
+        df_track = pd.read_excel(tracking_file) if tracking_file.name.endswith('xlsx') else pd.read_csv(tracking_file)
+    
     results = process_audit(df_vtcs, df_track)
 
-    # --- UI DISPLAY ---
-    st.header("📊 Daily Audit Summary")
-    
-    # Tonnage Summary
-    total_tons = results['Tonnage'].sum()
-    st.metric("Total Tonnage Today", f"{total_tons:.2f} Tons")
-
-    # Vehicle Table
-    st.subheader("Vehicle-wise Breakdown")
-    v_sum = results.groupby('Vehicle').agg({'Tonnage': 'sum', 'Data ID': 'count'}).rename(columns={'Data ID': 'Trips'})
-    st.table(v_sum)
-
-    # Detailed Audit Log
-    st.subheader("🔍 Detailed Audit Log")
-    show_cols = ['Vehicle', 'Time In', 'Time Out', 'Duration_Mins', 'Tonnage', 'Time_Status']
+    # --- UI DASHBOARD ---
+    st.header("📋 Audit Dashboard")
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Total Tonnage (Day)", f"{results['Tonnage'].sum():.2f} Tons")
+    m2.metric("Delayed Trips (>30m)", len(results[results['Time_Status'].str.contains("🚨")]))
     if 'GPS_Audit' in results.columns:
-        show_cols.append('GPS_Audit')
+        m3.metric("GPS Conflicts", len(results[results['GPS_Audit'] == "❌ Conflict (Moving)"]))
 
-    def highlight_results(val):
+    # --- VEHICLE SUMMARY SECTION ---
+    st.divider()
+    st.subheader("Vehicle-Wise Summary")
+    summary = results.groupby('Vehicle').agg({
+        'Tonnage': 'sum', 
+        'Data ID': 'count'
+    }).rename(columns={'Data ID': 'Total Trips', 'Tonnage': 'Total Tonnage (Tons)'})
+    
+    st.table(summary)
+    
+    # Download Vehicle Summary
+    sum_csv = convert_df_to_csv(summary)
+    st.download_button(
+        label="📥 Download Vehicle Summary CSV",
+        data=sum_csv,
+        file_name="Vehicle_Summary.csv",
+        mime="text/csv",
+    )
+
+    # --- DETAILED LOGS SECTION ---
+    st.divider()
+    st.subheader("Detailed Audit Logs")
+    display_cols = ['Vehicle', 'Time In', 'Time Out', 'Duration_Mins', 'Tonnage', 'Time_Status']
+    if 'GPS_Audit' in results.columns:
+        display_cols.append('GPS_Audit')
+
+    def color_rows(val):
         if '🚨' in str(val) or '❌' in str(val): return 'background-color: #ffcccc'
         if '✅' in str(val): return 'background-color: #ccffcc'
         return ''
 
-    st.dataframe(results[show_cols].style.applymap(highlight_results), use_container_width=True)
+    st.dataframe(results[display_cols].style.applymap(color_rows), use_container_width=True)
+
+    # Download Detailed Audit
+    full_csv = convert_df_to_csv(results[display_cols])
+    st.download_button(
+        label="📥 Download Detailed Audit Report",
+        data=full_csv,
+        file_name="Full_Audit_Report.csv",
+        mime="text/csv",
+    )
 
 else:
-    st.info("Please upload your VTCS file to begin.")
+    st.info("Please upload your VTCS file from the sidebar to start.")

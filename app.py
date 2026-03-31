@@ -97,7 +97,7 @@ with st.sidebar:
     tracking_file = st.file_uploader("2. Tracker Portal Data", type=['xlsx', 'csv'])
     
     st.divider()
-    st.subheader("📍 Geofence Config")
+    st.subheader("📍 TCP & WE Tracking")
     with st.expander("TCP & WE Settings"):
         geo_upload = st.file_uploader("Upload Coordinate File", type=['xlsx', 'csv'])
         if geo_upload:

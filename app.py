@@ -19,7 +19,7 @@ st.markdown("""
         background: linear-gradient(90deg, #1e3d59 0%, #0068c9 100%);
         padding: 20px;
         border-radius: 10px;
-        color: white;
+        color: black;
         text-align: center;
         margin-bottom: 25px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);

@@ -8,74 +8,84 @@ from math import radians, cos, sin, asin, sqrt
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="VTCS Auditor Pro", layout="wide", initial_sidebar_state="expanded")
 
-# --- ADVANCED UI STYLING (Updated for Green Browse Buttons) ---
+# --- ADVANCED UI STYLING (White Text & Metric Preservation) ---
 st.markdown("""
-    <style>
-    /* Main background */
-    .stApp { background-color: #f4f7f9; }
-    
-    /* Branded Header */
-    .main-header {
-        background: linear-gradient(90deg, #1e3d59 0%, #0068c9 100%);
-        padding: 20px;
-        border-radius: 10px;
-        color: black;
-        text-align: center;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    /* Metric Card Styling */
-    div[data-testid="metric-container"] {
-        background-color: #ffffff;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border-bottom: 4px solid #0068c9;
-    }
+    <style>
+    /* Main background */
+    .stApp { background-color: #f4f7f9; }
+    
+    /* Make all general text, labels, and file names WHITE */
+    .stApp p, .stApp label, .stApp span, .stApp h1, .stApp h2, .stApp h3 {
+        color: white !important;
+    }
 
-    /* GREEN BROWSE FILE BUTTONS */
-    /* This targets the button inside the file uploader */
-    button[kind="secondary"] {
-        border: 1px solid #2ecc71 !important;
-        color: #2ecc71 !important;
-        background-color: transparent !important;
-    }
+    /* Fix for uploaded file name text specifically */
+    [data-testid="stFileUploadDropzone"] div div {
+        color: white !important;
+    }
 
-    /* This targets the actual upload button click state */
-    section[data-testid="stFileUploader"] button {
-        background-color: #2ecc71 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        border: none !important;
-        transition: 0.3s all ease;
-    }
+    /* PRESERVE METRIC CARD TEXT (Keep these dark for readability on white cards) */
+    div[data-testid="metric-container"] label, 
+    div[data-testid="metric-container"] div {
+        color: #1e3d59 !important;
+    }
+    
+    /* Branded Header */
+    .main-header {
+        background: linear-gradient(90deg, #1e3d59 0%, #0068c9 100%);
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Metric Card Styling */
+    div[data-testid="metric-container"] {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-bottom: 4px solid #0068c9;
+    }
 
-    section[data-testid="stFileUploader"] button:hover {
-        background-color: #27ae60 !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-    }
+    /* GREEN BROWSE FILE BUTTONS */
+    section[data-testid="stFileUploader"] button {
+        background-color: #2ecc71 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        transition: 0.3s all ease;
+    }
 
-    /* Sidebar styling */
-    section[data-testid="stSidebar"] {
-        background-color: #1e3d59;
-    }
-    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
-        color: white !important;
-    }
-    
-    </style>
-    """, unsafe_allow_html=True)
+    section[data-testid="stFileUploader"] button:hover {
+        background-color: #27ae60 !important;
+    }
+
+    /* Sidebar styling and label colors */
+    section[data-testid="stSidebar"] {
+        background-color: #1e3d59;
+    }
+    section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label {
+        color: white !important;
+    }
+
+    /* Tabs styling to keep text visible */
+    .stTabs [data-baseweb="tab"] p {
+        color: #1e3d59 !important; /* Keep tab names dark for visibility on white background */
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- HEADER SECTION ---
 st.markdown("""
-    <div class="main-header">
-        <h1 style='margin:0; font-size: 2.5rem; color: white;'>🚛 VTCS AUDITOR</h1>
-        <p style='margin:0; opacity: 0.8; color: white;'>Precision Fleet Audit & Geofencing Dashboard</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# ... [REST OF YOUR CODE CONTINUES AS NORMAL FROM HERE] ...
+    <div class="main-header">
+        <h1 style='margin:0; font-size: 2.5rem; color: white !important;'>🚛 VTCS AUDITOR</h1>
+        <p style='margin:0; opacity: 0.8; color: white !important;'>Precision Fleet Audit & Geofencing Dashboard</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- HELPER: HAVERSINE ---
 def haversine(lat1, lon1, lat2, lon2):
@@ -97,7 +107,7 @@ with st.sidebar:
     tracking_file = st.file_uploader("2. Tracker Portal Data", type=['xlsx', 'csv'])
     
     st.divider()
-    st.subheader("📍 TCP & WE Tracking")
+    st.subheader("📍 Geofence Config")
     with st.expander("TCP & WE Settings"):
         geo_upload = st.file_uploader("Upload Coordinate File", type=['xlsx', 'csv'])
         if geo_upload:
@@ -110,8 +120,8 @@ with st.sidebar:
                 st.session_state.geo_data = None
                 st.rerun()
 
+# --- MAIN PROCESSING LOGIC ---
 def process_audit(vtcs_df, track_df=None):
-    # --- VTCS LOGIC ---
     for col in ['Waste Collected (Kg)', 'Before Weight', 'After Weight (Kg)']:
         if col in vtcs_df.columns:
             vtcs_df[col] = pd.to_numeric(vtcs_df[col].astype(str).str.replace(',', ''), errors='coerce')
@@ -122,7 +132,6 @@ def process_audit(vtcs_df, track_df=None):
     vtcs_df['Duration_Mins'] = (vtcs_df['Time Out'] - vtcs_df['Time In']).dt.total_seconds() / 60
     vtcs_df['Time_Status'] = vtcs_df['Duration_Mins'].apply(lambda x: "🚨 Suspicious (>30m)" if x > 30 else "✅ Normal")
 
-    # --- TRACKING LOGIC ---
     if track_df is not None:
         if 'Time' not in [str(c).strip() for c in track_df.columns]:
             for i in range(min(len(track_df), 20)):
@@ -182,37 +191,29 @@ if vtcs_file:
     if 'GPS_Audit' in results.columns:
         kpi_cols[3].metric("GPS Conflicts", len(results[results['GPS_Audit'] == "❌ Moving"]))
 
-    # --- ANALYTICS ---
-    st.write("### 📊 Operational Overview")
+    # --- ANALYTICS CHARTS ---
+    st.markdown("### 📊 Operational Overview")
     c1, c2 = st.columns(2)
     v_stats = results.groupby('Vehicle').agg({'Tonnage':'sum', 'Data ID':'count'}).reset_index()
     v_stats.columns = ['Vehicle', 'Tons', 'Trips']
 
     with c1:
-        st.plotly_chart(px.bar(v_stats, x='Vehicle', y='Tons', title="Tonnage by Fleet", template="plotly_white", color_discrete_sequence=['#1e3d59']), use_container_width=True)
+        st.plotly_chart(px.bar(v_stats, x='Vehicle', y='Tons', template="plotly_white", color_discrete_sequence=['#1e3d59']), use_container_width=True)
     with c2:
-        st.plotly_chart(px.bar(v_stats, x='Vehicle', y='Trips', title="Trips by Fleet", template="plotly_white", color_discrete_sequence=['#2ecc71']), use_container_width=True)
+        st.plotly_chart(px.bar(v_stats, x='Vehicle', y='Trips', template="plotly_white", color_discrete_sequence=['#2ecc71']), use_container_width=True)
 
-    # --- DATA TABS ---
+    # --- TABS ---
     t1, t2 = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
     
     with t1:
         summ = results.groupby('Vehicle').agg({'Tonnage': 'sum', 'Data ID': 'count', 'Duration_Mins': 'mean'}).rename(columns={'Data ID': 'Trips', 'Tonnage': 'Total Tons', 'Duration_Mins': 'Avg Mins'})
         st.dataframe(summ.style.background_gradient(cmap='Blues', subset=['Total Tons']).format("{:.2f}"), use_container_width=True)
-        st.download_button("📥 Export Summary", summ.to_csv().encode('utf-8'), "Summary.csv")
 
     with t2:
         cols = ['Vehicle', 'Time In', 'Time Out', 'Duration_Mins', 'Tonnage', 'Time_Status']
-        for c in ['GPS_Audit', 'Zone_Check']:
-            if c in results.columns: cols.append(c)
-        
-        def highlight(row):
-            if "🚨" in str(row['Time_Status']) or "❌" in str(row.get('GPS_Audit', '')):
-                return ['background-color: #fff0f0'] * len(row)
-            return [''] * len(row)
-
-        st.dataframe(results[cols].style.apply(highlight, axis=1), use_container_width=True)
-        st.download_button("📥 Export Audit Report", results[cols].to_csv(index=False).encode('utf-8'), "Full_Audit.csv")
+        if 'GPS_Audit' in results.columns: cols.append('GPS_Audit')
+        if 'Zone_Check' in results.columns: cols.append('Zone_Check')
+        st.dataframe(results[cols], use_container_width=True)
 
 else:
-    st.info("💡 **Getting Started:** Upload your VTCS export in the sidebar to populate the dashboard.")
+    st.info("💡 Getting Started: Upload your files in the sidebar.")

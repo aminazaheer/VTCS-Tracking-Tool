@@ -8,75 +8,111 @@ from math import radians, cos, sin, asin, sqrt
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="VTCS Auditor Pro", layout="wide", initial_sidebar_state="expanded")
 
-# --- CUSTOM CSS FOR PROFESSIONAL UI ---
+# --- ADVANCED UI STYLING ---
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
+    /* Main background */
+    .stApp { background-color: #f4f7f9; }
+    
+    /* Branded Header */
+    .main-header {
+        background: linear-gradient(90deg, #1e3d59 0%, #0068c9 100%);
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Metric Card Styling */
     div[data-testid="metric-container"] {
         background-color: #ffffff;
-        border-radius: 10px;
-        padding: 15px;
+        border-radius: 12px;
+        padding: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border-left: 5px solid #0068c9;
+        border-bottom: 4px solid #0068c9;
     }
-    .stTable { background-color: white; border-radius: 10px; }
-    .stDataFrame { border-radius: 10px; }
-    h1, h2, h3 { color: #1e3d59; font-family: 'Segoe UI', sans-serif; }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #0068c9; color: white; }
+    
+    /* Sidebar styling */
+    section[data-testid="stSidebar"] {
+        background-color: #1e3d59;
+        color: white;
+    }
+    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] h2 {
+        color: white !important;
+    }
+
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 24px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: #ffffff;
+        border-radius: 5px 5px 0px 0px;
+        gap: 1px;
+        padding: 10px 20px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- HELPER: HAVERSINE FORMULA ---
+# --- HEADER SECTION ---
+st.markdown("""
+    <div class="main-header">
+        <h1 style='margin:0; font-size: 2.5rem;'>🚛 VTCS AUDITOR</h1>
+        <p style='margin:0; opacity: 0.8;'>Precision Fleet Audit & Geofencing Dashboard</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- HELPER: HAVERSINE ---
 def haversine(lat1, lon1, lat2, lon2):
-    R = 6371000 # Meters
+    R = 6371000 
     phi1, phi2 = radians(lat1), radians(lat2)
     dphi = radians(lat2 - lat1)
     dlambda = radians(lon2 - lon1)
     a = sin(dphi / 2)**2 + cos(phi1) * cos(phi2) * sin(dlambda / 2)**2
     return 2 * R * asin(sqrt(a))
 
-# --- SESSION STATE FOR COORDINATES ---
 if 'geo_data' not in st.session_state:
     st.session_state.geo_data = None
 
-st.title("🚛 VTCS & GPS Tracking Auditor")
-st.markdown("Automated Daily Audit & Operation Analytics")
-
 # --- SIDEBAR ---
 with st.sidebar:
-    st.header("📂 Data Control")
-    vtcs_file = st.file_uploader("1. Upload VTCS Data", type=['xlsx', 'csv'])
-    tracking_file = st.file_uploader("2. Upload Tracking Report", type=['xlsx', 'csv'])
+    st.image("https://img.icons8.com/fluency/96/truck.png", width=80)
+    st.header("Control Panel")
+    vtcs_file = st.file_uploader("1. VTCS Daily Data", type=['xlsx', 'csv'])
+    tracking_file = st.file_uploader("2. Tracker Portal Data", type=['xlsx', 'csv'])
     
     st.divider()
-    st.header("📍 Location Settings")
-    with st.expander("TCP & WE Coordinates"):
-        geo_upload = st.file_uploader("Upload Geo-Fence File", type=['xlsx', 'csv'])
+    st.subheader("📍 Geofence Config")
+    with st.expander("TCP & WE Settings"):
+        geo_upload = st.file_uploader("Upload Coordinate File", type=['xlsx', 'csv'])
         if geo_upload:
             st.session_state.geo_data = pd.read_excel(geo_upload) if geo_upload.name.endswith('xlsx') else pd.read_csv(geo_upload)
-            st.success("Locations Loaded!")
+            st.success("Coordinates Linked!")
         
         if st.session_state.geo_data is not None:
-            if st.button("🗑️ Reset Locations"):
+            st.info(f"Active Zones: {len(st.session_state.geo_data)}")
+            if st.button("🗑️ Reset Zones"):
                 st.session_state.geo_data = None
                 st.rerun()
 
 def process_audit(vtcs_df, track_df=None):
-    # --- 1. VTCS PROCESSING ---
+    # --- VTCS LOGIC ---
     for col in ['Waste Collected (Kg)', 'Before Weight', 'After Weight (Kg)']:
         if col in vtcs_df.columns:
             vtcs_df[col] = pd.to_numeric(vtcs_df[col].astype(str).str.replace(',', ''), errors='coerce')
     
-    vtcs_df['Tonnage'] = vtcs_df['Waste Collected (Kg)'] / 1000
+    vtcs_df['Tonnage'] = vtcs_df['Waste Collected (Kg)'].fillna(0) / 1000
     vtcs_df['Time In'] = pd.to_datetime(vtcs_df['Time In'], errors='coerce')
     vtcs_df['Time Out'] = pd.to_datetime(vtcs_df['Time Out'], errors='coerce')
-    
     vtcs_df['Duration_Mins'] = (vtcs_df['Time Out'] - vtcs_df['Time In']).dt.total_seconds() / 60
     vtcs_df['Time_Status'] = vtcs_df['Duration_Mins'].apply(lambda x: "🚨 Suspicious (>30m)" if x > 30 else "✅ Normal")
 
-    # --- 2. TRACKING CROSS-CHECK ---
+    # --- TRACKING LOGIC ---
     if track_df is not None:
-        # Detect header
         if 'Time' not in [str(c).strip() for c in track_df.columns]:
             for i in range(min(len(track_df), 20)):
                 row_values = [str(val).strip() for val in track_df.iloc[i].values]
@@ -84,50 +120,39 @@ def process_audit(vtcs_df, track_df=None):
                     track_df.columns = row_values
                     track_df = track_df.iloc[i+1:].reset_index(drop=True)
                     break
-        
         track_df.columns = [str(c).strip() for c in track_df.columns]
         
-        if 'Time' in track_df.columns and 'Status' in track_df.columns:
+        if 'Time' in track_df.columns:
             track_df['Time'] = pd.to_datetime(track_df['Time'], errors='coerce')
-            
-            gps_audit_results = []
-            zone_results = []
+            gps_audit, zone_check = [], []
 
-            for idx, row in vtcs_df.iterrows():
-                target_time = row['Time In']
-                if pd.isnull(target_time):
-                    gps_audit_results.append("❓ Invalid Time")
-                    zone_results.append("N/A")
+            for _, row in vtcs_df.iterrows():
+                t_time = row['Time In']
+                if pd.isnull(t_time):
+                    gps_audit.append("❓ Invalid"); zone_check.append("N/A")
                     continue
 
-                mask = (track_df['Time'] >= target_time - timedelta(minutes=2)) & \
-                       (track_df['Time'] <= target_time + timedelta(minutes=2))
-                nearby_pings = track_df[mask]
+                mask = (track_df['Time'] >= t_time - timedelta(minutes=2)) & \
+                       (track_df['Time'] <= t_time + timedelta(minutes=2))
+                pings = track_df[mask]
                 
-                if nearby_pings.empty:
-                    gps_audit_results.append("❓ No GPS Data")
-                    zone_results.append("Unknown")
+                if pings.empty:
+                    gps_audit.append("❓ No Data"); zone_check.append("Unknown")
                 else:
-                    # Status Check
-                    statuses = nearby_pings['Status'].astype(str).str.lower().values
-                    is_valid = any(('idle' in s or 'parked' in s or 'stopped' in s) for s in statuses)
-                    gps_audit_results.append("✅ Verified (Idle)" if is_valid else "❌ Conflict (Moving)")
+                    stts = pings['Status'].astype(str).str.lower().values
+                    valid_idle = any(x in s for s in stts for x in ['idle', 'parked', 'stopped'])
+                    gps_audit.append("✅ Verified" if valid_idle else "❌ Moving")
                     
-                    # Zone Geofence Check
-                    zone_found = "❌ Outside Zone"
-                    if st.session_state.geo_data is not None and 'Latitude' in nearby_pings.columns:
-                        v_lat = nearby_pings.iloc[0]['Latitude']
-                        v_lon = nearby_pings.iloc[0]['Longitude']
+                    z_found = "❌ Outside Zone"
+                    if st.session_state.geo_data is not None and 'Latitude' in pings.columns:
+                        v_lat, v_lon = pings.iloc[0]['Latitude'], pings.iloc[0]['Longitude']
                         for _, loc in st.session_state.geo_data.iterrows():
-                            dist = haversine(v_lat, v_lon, loc['Latitude'], loc['Longitude'])
-                            if dist <= loc.get('Radius_Meters', 150):
-                                zone_found = f"✅ {loc['Name']}"
+                            if haversine(v_lat, v_lon, loc['Latitude'], loc['Longitude']) <= loc.get('Radius_Meters', 150):
+                                z_found = f"✅ {loc['Name']}"
                                 break
-                    zone_results.append(zone_found)
+                    zone_check.append(z_found)
             
-            vtcs_df['GPS_Audit'] = gps_audit_results
-            vtcs_df['Zone_Check'] = zone_results
-
+            vtcs_df['GPS_Audit'], vtcs_df['Zone_Check'] = gps_audit, zone_check
     return vtcs_df
 
 if vtcs_file:
@@ -138,65 +163,45 @@ if vtcs_file:
     
     results = process_audit(df_vtcs, df_track)
 
-    # --- TOP KPI METRICS ---
-    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    with kpi1: st.metric("Total Weight", f"{results['Tonnage'].sum():.2f} Tons")
-    with kpi2: st.metric("Daily Trips", len(results))
-    with kpi3: st.metric("Suspicious Trips", len(results[results['Time_Status'].str.contains("🚨")]))
-    with kpi4: 
-        if 'GPS_Audit' in results.columns:
-            st.metric("GPS Conflicts", len(results[results['GPS_Audit'] == "❌ Conflict (Moving)"]))
-        else:
-            st.metric("GPS Status", "Waiting...")
+    # --- KPI METRICS ---
+    kpi_cols = st.columns(4)
+    kpi_cols[0].metric("Total Tonnage", f"{results['Tonnage'].sum():.1f} T")
+    kpi_cols[1].metric("Trip Count", len(results))
+    kpi_cols[2].metric("Delayed (>30m)", len(results[results['Time_Status'].str.contains("🚨")]))
+    if 'GPS_Audit' in results.columns:
+        kpi_cols[3].metric("GPS Conflicts", len(results[results['GPS_Audit'] == "❌ Moving"]))
 
-    # --- CHARTS SECTION ---
-    st.divider()
-    chart_col1, chart_col2 = st.columns(2)
-    
-    vehicle_stats = results.groupby('Vehicle').agg({'Tonnage':'sum', 'Data ID':'count'}).reset_index()
-    vehicle_stats.columns = ['Vehicle', 'Tons', 'Trips']
+    # --- ANALYTICS ---
+    st.write("### 📊 Operational Overview")
+    c1, c2 = st.columns(2)
+    v_stats = results.groupby('Vehicle').agg({'Tonnage':'sum', 'Data ID':'count'}).reset_index()
+    v_stats.columns = ['Vehicle', 'Tons', 'Trips']
 
-    with chart_col1:
-        fig1 = px.bar(vehicle_stats, x='Vehicle', y='Tons', title="Tonnage per Vehicle", color='Tons', color_continuous_scale='Blues')
-        st.plotly_chart(fig1, use_container_width=True)
-    
-    with chart_col2:
-        fig2 = px.bar(vehicle_stats, x='Vehicle', y='Trips', title="Number of Trips per Vehicle", color='Trips', color_continuous_scale='Greens')
-        st.plotly_chart(fig2, use_container_width=True)
+    with c1:
+        st.plotly_chart(px.bar(v_stats, x='Vehicle', y='Tons', title="Tonnage by Fleet", template="plotly_white", color_discrete_sequence=['#1e3d59']), use_container_width=True)
+    with c2:
+        st.plotly_chart(px.bar(v_stats, x='Vehicle', y='Trips', title="Trips by Fleet", template="plotly_white", color_discrete_sequence=['#2ecc71']), use_container_width=True)
 
     # --- DATA TABS ---
-    tab1, tab2 = st.tabs(["📊 Performance Summary", "🔍 Detailed Audit Log"])
+    t1, t2 = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
+    
+    with t1:
+        summ = results.groupby('Vehicle').agg({'Tonnage': 'sum', 'Data ID': 'count', 'Duration_Mins': 'mean'}).rename(columns={'Data ID': 'Trips', 'Tonnage': 'Total Tons', 'Duration_Mins': 'Avg Mins'})
+        st.dataframe(summ.style.background_gradient(cmap='Blues', subset=['Total Tons']).format("{:.2f}"), use_container_width=True)
+        st.download_button("📥 Export Summary", summ.to_csv().encode('utf-8'), "Summary.csv")
 
-    with tab1:
-        st.subheader("Vehicle-Wise Efficiency")
-        summary = results.groupby('Vehicle').agg({
-            'Tonnage': 'sum', 
-            'Data ID': 'count',
-            'Duration_Mins': 'mean'
-        }).rename(columns={'Data ID': 'Total Trips', 'Tonnage': 'Total Tons', 'Duration_Mins': 'Avg Time (m)'})
+    with t2:
+        cols = ['Vehicle', 'Time In', 'Time Out', 'Duration_Mins', 'Tonnage', 'Time_Status']
+        for c in ['GPS_Audit', 'Zone_Check']:
+            if c in results.columns: cols.append(c)
         
-        # Table with colored heatmap for tonnage
-        st.dataframe(summary.style.background_gradient(cmap='YlGnBu', subset=['Total Tons']).format("{:.2f}"), use_container_width=True)
-        
-        st.download_button("📥 Download Summary CSV", data=summary.to_csv().encode('utf-8'), file_name="Vehicle_Summary.csv")
-
-    with tab2:
-        st.subheader("Row-by-Row Validation")
-        display_cols = ['Vehicle', 'Time In', 'Time Out', 'Duration_Mins', 'Tonnage', 'Time_Status']
-        if 'GPS_Audit' in results.columns: display_cols.append('GPS_Audit')
-        if 'Zone_Check' in results.columns: display_cols.append('Zone_Check')
-
-        def style_rows(row):
-            styles = [''] * len(row)
+        def highlight(row):
             if "🚨" in str(row['Time_Status']) or "❌" in str(row.get('GPS_Audit', '')):
-                return ['background-color: #ffe6e6'] * len(row)
-            if "✅" in str(row['Time_Status']):
-                return ['background-color: #e6ffed'] * len(row)
-            return styles
+                return ['background-color: #fff0f0'] * len(row)
+            return [''] * len(row)
 
-        st.dataframe(results[display_cols].style.apply(style_rows, axis=1), use_container_width=True)
-        
-        st.download_button("📥 Download Full Audit Report", data=results[display_cols].to_csv(index=False).encode('utf-8'), file_name="Audit_Report.csv")
+        st.dataframe(results[cols].style.apply(highlight, axis=1), use_container_width=True)
+        st.download_button("📥 Export Audit Report", results[cols].to_csv(index=False).encode('utf-8'), "Full_Audit.csv")
 
 else:
-    st.info("👋 Welcome! Please upload your VTCS Daily Export from the sidebar to begin the audit.")
+    st.info("💡 **Getting Started:** Upload your VTCS export in the sidebar to populate the dashboard.")

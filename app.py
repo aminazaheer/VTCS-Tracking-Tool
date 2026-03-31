@@ -8,13 +8,58 @@ from math import radians, cos, sin, asin, sqrt
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="VTCS Auditor Pro", layout="wide", initial_sidebar_state="expanded")
 
-# --- ADVANCED UI STYLING (Updated for Green Browse Buttons) ---
+# --- ADVANCED UI STYLING ---
 st.markdown("""
     <style>
-    /* Main background */
+    /* 1. Main Background */
     .stApp { background-color: #f4f7f9; }
     
-    /* Branded Header */
+    /* 2. Global Text to White (General Dashboard) */
+    .stApp h1, .stApp h2, .stApp h3, .stApp p, .stApp label {
+        color: white !important;
+    }
+
+    /* 3. SIDEBAR SPECIFIC: Make all labels and headers White */
+    section[data-testid="stSidebar"] .stMarkdown, 
+    section[data-testid="stSidebar"] h1, 
+    section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] p {
+        color: white !important;
+    }
+
+    /* 4. EXCEPTION: Keep Metric Card text DARK (Readability) */
+    div[data-testid="metric-container"] label, 
+    div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
+        color: #1e3d59 !important;
+    }
+
+    /* 5. EXCEPTION: Keep File Uploader Box text DARK (Readability) */
+    /* This ensures the 'Drag and drop' and 'Selected Filename' are readable */
+    [data-testid="stFileUploader"] section {
+        background-color: #ffffff !important;
+        border-radius: 10px !important;
+    }
+    [data-testid="stFileUploader"] section p, 
+    [data-testid="stFileUploader"] section span,
+    [data-testid="stFileUploader"] small {
+        color: #1e3d59 !important;
+    }
+
+    /* 6. GREEN BROWSE FILE BUTTONS */
+    section[data-testid="stFileUploader"] button {
+        background-color: #2ecc71 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        transition: 0.3s all ease;
+    }
+    section[data-testid="stFileUploader"] button:hover {
+        background-color: #27ae60 !important;
+    }
+
+    /* 7. Branded Header */
     .main-header {
         background: linear-gradient(90deg, #1e3d59 0%, #0068c9 100%);
         padding: 20px;
@@ -25,7 +70,7 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     
-    /* Metric Card Styling */
+    /* 8. Metric Card Styling */
     div[data-testid="metric-container"] {
         background-color: #ffffff;
         border-radius: 12px;
@@ -34,46 +79,22 @@ st.markdown("""
         border-bottom: 4px solid #0068c9;
     }
 
-    /* GREEN BROWSE FILE BUTTONS */
-    /* This targets the button inside the file uploader */
-    button[kind="secondary"] {
-        border: 1px solid #2ecc71 !important;
-        color: #2ecc71 !important;
-        background-color: transparent !important;
-    }
-
-    /* This targets the actual upload button click state */
-    section[data-testid="stFileUploader"] button {
-        background-color: #2ecc71 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        border: none !important;
-        transition: 0.3s all ease;
-    }
-
-    section[data-testid="stFileUploader"] button:hover {
-        background-color: #27ae60 !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-    }
-
-    /* Sidebar styling */
+    /* 9. Sidebar background color */
     section[data-testid="stSidebar"] {
         background-color: #1e3d59;
     }
-    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
-        color: white !important;
-    }
-    
     </style>
     """, unsafe_allow_html=True)
 
 # --- HEADER SECTION ---
 st.markdown("""
     <div class="main-header">
-        <h1 style='margin:0; font-size: 2.5rem; color: white;'>🚛 VTCS AUDITOR</h1>
-        <p style='margin:0; opacity: 0.8; color: white;'>Precision Fleet Audit & Geofencing Dashboard</p>
+        <h1 style='margin:0; font-size: 2.5rem; color: white !important;'>🚛 VTCS AUDITOR</h1>
+        <p style='margin:0; opacity: 0.8; color: white !important;'>Precision Fleet Audit & Geofencing Dashboard</p>
     </div>
     """, unsafe_allow_html=True)
+
+# ... [REST OF YOUR CODE CONTINUES AS NORMAL] ...
 
 # ... [REST OF YOUR CODE CONTINUES AS NORMAL FROM HERE] ...
 

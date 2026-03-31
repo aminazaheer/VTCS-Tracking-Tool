@@ -12,7 +12,7 @@ st.set_page_config(page_title="VTCS Auditor Pro", layout="wide", initial_sidebar
 st.markdown("""
     <style>
     /* 1. Main Background */
-    .stApp { background-color: #f4f7f9; }
+    .stApp { background-color: #305CDE; }
     
     /* 2. Global Text to White (General Dashboard) */
     .stApp h1, .stApp h2, .stApp h3, .stApp p, .stApp label {

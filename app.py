@@ -7,7 +7,7 @@ import io
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="VTCS & GPS Auditor", layout="wide")
 
-st.title("🚛 VTCS & GPS Tracking Auditor")
+st.title("🚛 VTCS & Tracking Auditor")
 
 # --- SIDEBAR ---
 st.sidebar.header("Upload Data")

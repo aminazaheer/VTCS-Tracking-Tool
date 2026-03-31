@@ -8,7 +8,7 @@ from math import radians, cos, sin, asin, sqrt
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="VTCS Auditor Pro", layout="wide", initial_sidebar_state="expanded")
 
-# --- ADVANCED UI STYLING ---
+# --- ADVANCED UI STYLING (Updated for Green Browse Buttons) ---
 st.markdown("""
     <style>
     /* Main background */
@@ -33,38 +33,49 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         border-bottom: 4px solid #0068c9;
     }
-    
+
+    /* GREEN BROWSE FILE BUTTONS */
+    /* This targets the button inside the file uploader */
+    button[kind="secondary"] {
+        border: 1px solid #2ecc71 !important;
+        color: #2ecc71 !important;
+        background-color: transparent !important;
+    }
+
+    /* This targets the actual upload button click state */
+    section[data-testid="stFileUploader"] button {
+        background-color: #2ecc71 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        transition: 0.3s all ease;
+    }
+
+    section[data-testid="stFileUploader"] button:hover {
+        background-color: #27ae60 !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+    }
+
     /* Sidebar styling */
     section[data-testid="stSidebar"] {
         background-color: #1e3d59;
-        color: white;
     }
-    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] h2 {
+    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
         color: white !important;
     }
-
-    /* Tabs styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 24px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: #ffffff;
-        border-radius: 5px 5px 0px 0px;
-        gap: 1px;
-        padding: 10px 20px;
-    }
+    
     </style>
     """, unsafe_allow_html=True)
 
 # --- HEADER SECTION ---
 st.markdown("""
     <div class="main-header">
-        <h1 style='margin:0; font-size: 2.5rem;'>🚛 VTCS AUDITOR</h1>
-        <p style='margin:0; opacity: 0.8;'>Precision Fleet Audit & Geofencing Dashboard</p>
+        <h1 style='margin:0; font-size: 2.5rem; color: white;'>🚛 VTCS AUDITOR</h1>
+        <p style='margin:0; opacity: 0.8; color: white;'>Precision Fleet Audit & Geofencing Dashboard</p>
     </div>
     """, unsafe_allow_html=True)
+
+# ... [REST OF YOUR CODE CONTINUES AS NORMAL FROM HERE] ...
 
 # --- HELPER: HAVERSINE ---
 def haversine(lat1, lon1, lat2, lon2):

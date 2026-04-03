@@ -4,6 +4,8 @@ import numpy as np
 from datetime import timedelta
 import plotly.express as px
 from math import radians, cos, sin, asin, sqrt
+from pathlib import Path
+import re
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -283,6 +285,51 @@ def haversine(lat1, lon1, lat2, lon2):
     a = sin(dphi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(dlambda / 2) ** 2
     return 2 * R * asin(sqrt(a))
 
+def normalize_name(value):
+    if pd.isna(value):
+        return ""
+    value = str(value).strip().lower()
+    value = Path(value).stem
+    value = re.sub(r'[^a-z0-9]+', '', value)
+    return value
+
+def load_data_file(uploaded_file):
+    if uploaded_file.name.lower().endswith("xlsx"):
+        return pd.read_excel(uploaded_file)
+    return pd.read_csv(uploaded_file)
+
+def prepare_tracking_df(track_df):
+    track_df = track_df.copy()
+
+    if "Time" not in [str(c).strip() for c in track_df.columns]:
+        for i in range(min(len(track_df), 20)):
+            row_values = [str(val).strip() for val in track_df.iloc[i].values]
+            if "Time" in row_values:
+                track_df.columns = row_values
+                track_df = track_df.iloc[i + 1:].reset_index(drop=True)
+                break
+
+    track_df.columns = [str(c).strip() for c in track_df.columns]
+
+    if "Time" in track_df.columns:
+        track_df["Time"] = pd.to_datetime(track_df["Time"], errors="coerce")
+
+    if "Status" in track_df.columns:
+        track_df["Status"] = track_df["Status"].astype(str)
+
+    return track_df
+
+def find_matching_tracking_df(vehicle_name, tracking_files_map):
+    v_key = normalize_name(vehicle_name)
+
+    if v_key in tracking_files_map:
+        return tracking_files_map[v_key]
+
+    for file_key, df in tracking_files_map.items():
+        if v_key and (v_key in file_key or file_key in v_key):
+            return df
+
+    return None
 
 if "geo_data" not in st.session_state:
     st.session_state.geo_data = None
@@ -294,7 +341,12 @@ with st.sidebar:
     st.caption("Upload source files and manage geofence settings.")
 
     vtcs_file = st.file_uploader("1. VTCS Daily Data", type=["xlsx", "csv"])
-    tracking_file = st.file_uploader("2. Tracker Portal Data", type=["xlsx", "csv"])
+
+    tracking_files = st.file_uploader(
+        "2. Tracker Portal Data",
+        type=["xlsx", "csv"],
+        accept_multiple_files=True
+    )
 
     st.divider()
     st.markdown("### 📍 Geofence Config")
@@ -315,7 +367,9 @@ with st.sidebar:
                 st.rerun()
 
 # --- MAIN PROCESSING LOGIC ---
-def process_audit(vtcs_df, track_df=None):
+def process_audit(vtcs_df, tracking_files_map=None):
+    vtcs_df = vtcs_df.copy()
+
     for col in ["Waste Collected (Kg)", "Before Weight", "After Weight (Kg)"]:
         if col in vtcs_df.columns:
             vtcs_df[col] = pd.to_numeric(
@@ -332,43 +386,61 @@ def process_audit(vtcs_df, track_df=None):
         lambda x: "🚨 Suspicious (>30m)" if x > 30 else "✅ Normal"
     )
 
-    if track_df is not None:
-        if "Time" not in [str(c).strip() for c in track_df.columns]:
-            for i in range(min(len(track_df), 20)):
-                row_values = [str(val).strip() for val in track_df.iloc[i].values]
-                if "Time" in row_values:
-                    track_df.columns = row_values
-                    track_df = track_df.iloc[i + 1 :].reset_index(drop=True)
-                    break
-        track_df.columns = [str(c).strip() for c in track_df.columns]
+    if tracking_files_map:
+        gps_audit, zone_check, matched_files = [], [], []
 
-        if "Time" in track_df.columns:
-            track_df["Time"] = pd.to_datetime(track_df["Time"], errors="coerce")
-            gps_audit, zone_check = [], []
+        for _, row in vtcs_df.iterrows():
+            vehicle_name = row.get("Vehicle", "")
+            track_df = find_matching_tracking_df(vehicle_name, tracking_files_map)
+            matched_files.append(vehicle_name if track_df is not None else "No file matched")
 
-            for _, row in vtcs_df.iterrows():
-                t_time = row["Time In"]
-                if pd.isnull(t_time):
-                    gps_audit.append("❓ Invalid")
-                    zone_check.append("N/A")
-                    continue
+            t_time = row["Time In"]
+            if track_df is None:
+                gps_audit.append("❓ No Tracking File")
+                zone_check.append("Unknown")
+                continue
 
-                mask = (track_df["Time"] >= t_time - timedelta(minutes=2)) & (
-                    track_df["Time"] <= t_time + timedelta(minutes=2)
-                )
-                pings = track_df[mask]
+            if pd.isnull(t_time):
+                gps_audit.append("❓ Invalid")
+                zone_check.append("N/A")
+                continue
 
-                if pings.empty:
-                    gps_audit.append("❓ No Data")
-                    zone_check.append("Unknown")
-                else:
+            if "Time" not in track_df.columns:
+                gps_audit.append("❓ Invalid Tracking File")
+                zone_check.append("Unknown")
+                continue
+
+            mask = (track_df["Time"] >= t_time - timedelta(minutes=2)) & (
+                track_df["Time"] <= t_time + timedelta(minutes=2)
+            )
+            pings = track_df[mask]
+
+            if pings.empty:
+                gps_audit.append("❓ No Data")
+                zone_check.append("Unknown")
+            else:
+                if "Status" in pings.columns:
                     stts = pings["Status"].astype(str).str.lower().values
-                    valid_idle = any(x in s for s in stts for x in ["idle", "parked", "stopped"])
+                    valid_idle = any(
+                        keyword in s
+                        for s in stts
+                        for keyword in ["idle", "parked", "stopped"]
+                    )
                     gps_audit.append("✅ Verified" if valid_idle else "❌ Moving")
+                else:
+                    gps_audit.append("❓ Status Missing")
 
-                    z_found = "❌ Outside Zone"
-                    if st.session_state.geo_data is not None and "Latitude" in pings.columns:
-                        v_lat, v_lon = pings.iloc[0]["Latitude"], pings.iloc[0]["Longitude"]
+                z_found = "❌ Outside Zone"
+                if (
+                    st.session_state.geo_data is not None
+                    and "Latitude" in pings.columns
+                    and "Longitude" in pings.columns
+                ):
+                    valid_ping = pings.dropna(subset=["Latitude", "Longitude"])
+                    if not valid_ping.empty:
+                        v_lat = valid_ping.iloc[0]["Latitude"]
+                        v_lon = valid_ping.iloc[0]["Longitude"]
+
                         for _, loc in st.session_state.geo_data.iterrows():
                             if (
                                 haversine(v_lat, v_lon, loc["Latitude"], loc["Longitude"])
@@ -376,23 +448,31 @@ def process_audit(vtcs_df, track_df=None):
                             ):
                                 z_found = f"✅ {loc['Name']}"
                                 break
-                    zone_check.append(z_found)
 
-            vtcs_df["GPS_Audit"], vtcs_df["Zone_Check"] = gps_audit, zone_check
+                zone_check.append(z_found)
+
+        vtcs_df["Tracking_File_Match"] = matched_files
+        vtcs_df["GPS_Audit"] = gps_audit
+        vtcs_df["Zone_Check"] = zone_check
+
     return vtcs_df
 
 
 if vtcs_file:
     df_vtcs = pd.read_excel(vtcs_file) if vtcs_file.name.endswith("xlsx") else pd.read_csv(vtcs_file)
-    df_track = None
-    if tracking_file:
-        df_track = (
-            pd.read_excel(tracking_file)
-            if tracking_file.name.endswith("xlsx")
-            else pd.read_csv(tracking_file)
-        )
 
-    results = process_audit(df_vtcs, df_track)
+    tracking_files_map = {}
+    if tracking_files:
+        for uploaded_file in tracking_files:
+            try:
+                temp_df = load_data_file(uploaded_file)
+                temp_df = prepare_tracking_df(temp_df)
+                file_key = normalize_name(uploaded_file.name)
+                tracking_files_map[file_key] = temp_df
+            except Exception as e:
+                st.warning(f"Could not read tracking file: {uploaded_file.name} | {e}")
+
+    results = process_audit(df_vtcs, tracking_files_map if tracking_files_map else None)
 
     # --- KPI METRICS ---
     st.markdown(
@@ -507,6 +587,8 @@ if vtcs_file:
             unsafe_allow_html=True,
         )
         cols = ["Vehicle", "Time In", "Time Out", "Duration_Mins", "Tonnage", "Time_Status"]
+        if "Tracking_File_Match" in results.columns:
+            cols.append("Tracking_File_Match")
         if "GPS_Audit" in results.columns:
             cols.append("GPS_Audit")
         if "Zone_Check" in results.columns:

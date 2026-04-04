@@ -43,9 +43,6 @@ st.markdown(
         --orange: #f59e0b;
         --orange-soft: #fff4e4;
 
-        --navy: #183b8c;
-        --navy-deep: #0e2459;
-
         --shadow: 0 14px 34px rgba(19, 41, 92, 0.10);
         --shadow-strong: 0 18px 40px rgba(19, 41, 92, 0.16);
     }
@@ -166,15 +163,6 @@ st.markdown(
         border-color: #ffe0b2;
     }
 
-    .focus-strip {
-        background: linear-gradient(90deg, #ffffff 0%, #f7fbff 100%);
-        border: 1px solid #dce7f4;
-        border-radius: 18px;
-        min-height: 18px;
-        box-shadow: 0 8px 20px rgba(17, 38, 84, 0.05);
-        margin-bottom: 18px;
-    }
-
     .kpi-shell {
         background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
         border: 1px solid #dfe8f3;
@@ -213,11 +201,30 @@ st.markdown(
     }
 
     .mini-kpi-card {
-        background: #ffffff;
-        border: 1px solid #deebf7;
         border-radius: 18px;
         padding: 16px;
         box-shadow: 0 10px 24px rgba(17, 38, 84, 0.07);
+        border: 1px solid #deebf7;
+    }
+
+    .mini-kpi-blue {
+        background: linear-gradient(180deg, #eef6ff 0%, #e3f0ff 100%);
+        border: 1px solid #cfe1ff;
+    }
+
+    .mini-kpi-green {
+        background: linear-gradient(180deg, #eefcf2 0%, #e4f8ea 100%);
+        border: 1px solid #cdeed8;
+    }
+
+    .mini-kpi-orange {
+        background: linear-gradient(180deg, #fff7eb 0%, #ffefd8 100%);
+        border: 1px solid #ffe0b8;
+    }
+
+    .mini-kpi-slate {
+        background: linear-gradient(180deg, #f2f7fb 0%, #eaf1f8 100%);
+        border: 1px solid #dbe6f0;
     }
 
     .mini-kpi-label {
@@ -727,8 +734,6 @@ if vtcs_file:
     avg_trip_time = results["Duration_Mins"].dropna().mean() if "Duration_Mins" in results.columns else 0
     active_vehicles = results["Vehicle"].nunique() if "Vehicle" in results.columns else 0
 
-    st.markdown('<div class="focus-strip"></div>', unsafe_allow_html=True)
-
     st.markdown('<div class="kpi-shell">', unsafe_allow_html=True)
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Total Tonnage", f"{results['Tonnage'].sum():.1f} T")
@@ -740,19 +745,19 @@ if vtcs_file:
     st.markdown(
         f"""
         <div class="mini-kpi-grid">
-            <div class="mini-kpi-card">
+            <div class="mini-kpi-card mini-kpi-blue">
                 <div class="mini-kpi-label">Active Vehicles</div>
                 <div class="mini-kpi-value">{active_vehicles}</div>
             </div>
-            <div class="mini-kpi-card">
+            <div class="mini-kpi-card mini-kpi-green">
                 <div class="mini-kpi-label">Average Trip Time</div>
                 <div class="mini-kpi-value">{0 if pd.isna(avg_trip_time) else round(avg_trip_time, 1)} mins</div>
             </div>
-            <div class="mini-kpi-card">
+            <div class="mini-kpi-card mini-kpi-orange">
                 <div class="mini-kpi-label">Geofence Status</div>
                 <div class="mini-kpi-value">{"Linked" if st.session_state.geo_data is not None else "Not Linked"}</div>
             </div>
-            <div class="mini-kpi-card">
+            <div class="mini-kpi-card mini-kpi-slate">
                 <div class="mini-kpi-label">Tracker Files</div>
                 <div class="mini-kpi-value">{len(tracking_files_map)}</div>
             </div>

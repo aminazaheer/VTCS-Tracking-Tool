@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# PROFESSIONAL UI STYLE
+# UI STYLE
 # =========================================================
 st.markdown(
     """
@@ -38,7 +38,7 @@ st.markdown(
         --blue-soft: #eaf3ff;
 
         --green: #22c55e;
-        --green-soft: #ebfbf1;
+        --green-soft: #eaf9f0;
 
         --orange: #f59e0b;
         --orange-soft: #fff4e4;
@@ -48,22 +48,19 @@ st.markdown(
 
         --shadow: 0 14px 34px rgba(19, 41, 92, 0.10);
         --shadow-strong: 0 18px 40px rgba(19, 41, 92, 0.16);
-        --radius-xl: 24px;
-        --radius-lg: 18px;
-        --radius-md: 14px;
     }
 
     .stApp {
         background:
-            radial-gradient(circle at top left, rgba(59,130,246,0.10), transparent 25%),
-            radial-gradient(circle at top right, rgba(34,197,94,0.08), transparent 24%),
-            linear-gradient(180deg, #f9fbfe 0%, #f5f8fc 48%, #edf3fa 100%);
+            radial-gradient(circle at top left, rgba(59,130,246,0.08), transparent 24%),
+            radial-gradient(circle at top right, rgba(34,197,94,0.07), transparent 22%),
+            linear-gradient(180deg, #f9fbfe 0%, #f4f7fb 45%, #edf3fa 100%);
         color: var(--text);
     }
 
     .block-container {
         max-width: 1520px;
-        padding-top: 1.1rem;
+        padding-top: 1.05rem;
         padding-bottom: 2rem;
     }
 
@@ -93,7 +90,7 @@ st.markdown(
         overflow: hidden;
         background:
             radial-gradient(circle at 85% 20%, rgba(255,255,255,0.16), transparent 24%),
-            radial-gradient(circle at 15% 20%, rgba(147,197,253,0.22), transparent 18%),
+            radial-gradient(circle at 15% 20%, rgba(147,197,253,0.20), transparent 18%),
             linear-gradient(135deg, #112654 0%, #1d4ed8 52%, #2563eb 100%);
         border-radius: 28px;
         padding: 30px 34px;
@@ -132,28 +129,6 @@ st.markdown(
         max-width: 880px;
     }
 
-    .soft-card {
-        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-        border: 1px solid var(--line);
-        border-radius: var(--radius-xl);
-        padding: 18px 20px;
-        box-shadow: var(--shadow);
-        margin-bottom: 18px;
-    }
-
-    .soft-card-title {
-        font-size: 1.05rem;
-        font-weight: 800;
-        margin: 0 0 4px 0;
-        color: var(--text) !important;
-    }
-
-    .soft-card-subtitle {
-        margin: 0;
-        color: var(--muted) !important;
-        font-size: 0.94rem;
-    }
-
     .insight-row {
         display: flex;
         gap: 12px;
@@ -174,78 +149,110 @@ st.markdown(
     }
 
     .pill-blue {
-        background: var(--blue-soft);
+        background: #eaf3ff;
         color: #1d4ed8 !important;
         border-color: #cfe1ff;
     }
 
     .pill-green {
-        background: var(--green-soft);
+        background: #ebfbf1;
         color: #15803d !important;
         border-color: #cfeedd;
     }
 
     .pill-orange {
-        background: var(--orange-soft);
+        background: #fff4e4;
         color: #c27007 !important;
         border-color: #ffe0b2;
+    }
+
+    .focus-strip {
+        background: linear-gradient(90deg, #ffffff 0%, #f7fbff 100%);
+        border: 1px solid #dce7f4;
+        border-radius: 18px;
+        min-height: 18px;
+        box-shadow: 0 8px 20px rgba(17, 38, 84, 0.05);
+        margin-bottom: 18px;
     }
 
     .kpi-shell {
         background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
         border: 1px solid #dfe8f3;
         border-radius: 22px;
-        padding: 8px;
+        padding: 10px;
         box-shadow: 0 16px 34px rgba(17, 38, 84, 0.08);
-        margin-bottom: 18px;
+        margin-bottom: 16px;
     }
 
     div[data-testid="metric-container"] {
         background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
         border: 1px solid #dbe7f3;
-        border-radius: 18px;
-        padding: 20px 16px;
-        box-shadow: 0 10px 26px rgba(17, 38, 84, 0.06);
+        border-radius: 20px;
+        padding: 22px 18px;
+        box-shadow: 0 12px 28px rgba(17, 38, 84, 0.06);
     }
 
     div[data-testid="metric-container"] label {
-        color: #6b7c93 !important;
+        color: #63758d !important;
         font-weight: 800 !important;
-        font-size: 0.92rem !important;
+        font-size: 0.95rem !important;
     }
 
     div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
-        color: #102447 !important;
+        color: #0d2a52 !important;
         font-weight: 900 !important;
-        font-size: 2rem !important;
+        font-size: 2.25rem !important;
+        letter-spacing: -0.02em;
     }
 
     .mini-kpi-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 14px;
-        margin: 4px 0 20px 0;
+        margin: 6px 0 24px 0;
     }
 
     .mini-kpi-card {
         background: #ffffff;
         border: 1px solid #deebf7;
         border-radius: 18px;
-        padding: 14px 16px;
+        padding: 16px;
         box-shadow: 0 10px 24px rgba(17, 38, 84, 0.07);
     }
 
     .mini-kpi-label {
         color: #6f8197 !important;
-        font-size: 0.82rem;
+        font-size: 0.84rem;
         font-weight: 800;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
     }
 
     .mini-kpi-value {
         color: #102447 !important;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         font-weight: 900;
+    }
+
+    .soft-card {
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+        margin-bottom: 18px;
+    }
+
+    .soft-card-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        margin: 0 0 4px 0;
+        color: var(--text) !important;
+    }
+
+    .soft-card-subtitle {
+        margin: 0;
+        color: var(--muted) !important;
+        font-size: 0.94rem;
     }
 
     [data-testid="stFileUploader"] section {
@@ -265,19 +272,19 @@ st.markdown(
 
     .stButton > button,
     [data-testid="stFileUploader"] button {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-        color: #ffffff !important;
-        border: none !important;
+        background: linear-gradient(135deg, #c7f4d3 0%, #8ee6a3 100%) !important;
+        color: #0d5a2a !important;
+        border: 2px solid #5dc57b !important;
         border-radius: 14px !important;
         font-weight: 850 !important;
         padding: 0.72rem 1rem !important;
-        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24) !important;
+        box-shadow: 0 10px 22px rgba(34, 197, 94, 0.18) !important;
     }
 
     .stButton > button:hover,
     [data-testid="stFileUploader"] button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 14px 28px rgba(37, 99, 235, 0.30) !important;
+        box-shadow: 0 14px 26px rgba(34, 197, 94, 0.24) !important;
     }
 
     .sidebar-panel {
@@ -510,36 +517,16 @@ def prepare_geofence_file(geo_df):
         return geo_df.dropna(subset=["Latitude", "Longitude"]).reset_index(drop=True)
 
     raise ValueError(
-        "Invalid geofence file format. Use either [Name, Latitude, Longitude] "
-        "or [TCP/WE, Lat/Long]."
+        "Invalid geofence file format. Use either [Name, Latitude, Longitude] or [TCP/WE, Lat/Long]."
     )
 
 
-def vehicle_family(vehicle_name):
-    name = str(vehicle_name).strip().upper()
-    if name.startswith("TT"):
-        return "TT"
-    if name.startswith("DUMPER"):
-        return "DUMPER"
-    return "OTHER"
+def has_t_in_name(vehicle_name):
+    return "T" in str(vehicle_name).upper()
 
 
-def tonnage_color(vehicle_name):
-    fam = vehicle_family(vehicle_name)
-    if fam == "TT":
-        return "#86efac"   # light green
-    if fam == "DUMPER":
-        return "#93c5fd"   # light blue
-    return "#fdba74"       # light orange
-
-
-def trips_color(vehicle_name):
-    fam = vehicle_family(vehicle_name)
-    if fam == "TT":
-        return "#22c55e"   # green
-    if fam == "DUMPER":
-        return "#3b82f6"   # blue
-    return "#f59e0b"       # orange
+def vehicle_type_color(vehicle_name):
+    return "#22c55e" if has_t_in_name(vehicle_name) else "#3b82f6"
 
 
 # =========================================================
@@ -740,15 +727,7 @@ if vtcs_file:
     avg_trip_time = results["Duration_Mins"].dropna().mean() if "Duration_Mins" in results.columns else 0
     active_vehicles = results["Vehicle"].nunique() if "Vehicle" in results.columns else 0
 
-    st.markdown(
-        """
-        <div class="soft-card">
-            <p class="soft-card-title">Executive KPIs</p>
-            <p class="soft-card-subtitle">A more prominent summary of core audit metrics for fast operational review.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="focus-strip"></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="kpi-shell">', unsafe_allow_html=True)
     k1, k2, k3, k4 = st.columns(4)
@@ -782,22 +761,9 @@ if vtcs_file:
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        """
-        <div class="soft-card">
-            <p class="soft-card-title">Operational Overview</p>
-            <p class="soft-card-subtitle">
-                Enhanced vehicle-wise charts with distinct colors for DUMPER and TT vehicles, plus cleaner chart presentation.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     v_stats = results.groupby("Vehicle").agg({"Tonnage": "sum", "Data ID": "count"}).reset_index()
     v_stats.columns = ["Vehicle", "Tons", "Trips"]
-    v_stats["Tonnage_Color"] = v_stats["Vehicle"].apply(tonnage_color)
-    v_stats["Trips_Color"] = v_stats["Vehicle"].apply(trips_color)
+    v_stats["Vehicle_Color"] = v_stats["Vehicle"].apply(vehicle_type_color)
 
     c1, c2 = st.columns(2)
 
@@ -808,7 +774,7 @@ if vtcs_file:
                 x=v_stats["Vehicle"],
                 y=v_stats["Tons"],
                 marker=dict(
-                    color=v_stats["Tonnage_Color"],
+                    color="#3b82f6",
                     line=dict(color="#ffffff", width=1.6)
                 ),
                 text=[f"{x:.2f}" for x in v_stats["Tons"]],
@@ -848,7 +814,7 @@ if vtcs_file:
                 x=v_stats["Vehicle"],
                 y=v_stats["Trips"],
                 marker=dict(
-                    color=v_stats["Trips_Color"],
+                    color=v_stats["Vehicle_Color"],
                     line=dict(color="#ffffff", width=1.6)
                 ),
                 text=[str(x) for x in v_stats["Trips"]],
@@ -880,20 +846,6 @@ if vtcs_file:
             showlegend=False
         )
         st.plotly_chart(trips_fig, use_container_width=True)
-
-    st.markdown(
-        """
-        <div class="soft-card">
-            <p class="soft-card-title">Graph Color Guide</p>
-            <p class="soft-card-subtitle">
-                <span style="font-weight:800;color:#3b82f6;">■ DUMPER (blue)</span> &nbsp;&nbsp;
-                <span style="font-weight:800;color:#22c55e;">■ TT (green)</span> &nbsp;&nbsp;
-                <span style="font-weight:800;color:#f59e0b;">■ Other (orange)</span>
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
     t1, t2 = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
 

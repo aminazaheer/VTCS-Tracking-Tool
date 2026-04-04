@@ -3,11 +3,14 @@ import pandas as pd
 import numpy as np
 from datetime import timedelta
 import plotly.express as px
+import plotly.graph_objects as go
 from math import radians, cos, sin, asin, sqrt
 from pathlib import Path
 import re
 
-# --- PAGE CONFIG ---
+# =========================================================
+# PAGE CONFIG
+# =========================================================
 st.set_page_config(
     page_title="VTCS Auditor Pro",
     page_icon="🚛",
@@ -15,45 +18,52 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- ADVANCED UI STYLING ---
+# =========================================================
+# PROFESSIONAL UI THEME
+# =========================================================
 st.markdown(
     """
     <style>
     :root {
-        --bg: #07111f;
-        --panel: rgba(13, 27, 46, 0.72);
-        --panel-2: rgba(18, 36, 61, 0.86);
-        --border: rgba(255, 255, 255, 0.10);
-        --text: #f8fbff;
-        --muted: #a7b7cf;
-        --accent: #5aa9ff;
-        --accent-2: #22c55e;
-        --danger: #ff6b6b;
-        --warning: #fbbf24;
-        --shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+        --bg-main: #f4f7fb;
+        --bg-soft: #eaf0f7;
+        --panel: #ffffff;
+        --panel-2: #f9fbfd;
+        --sidebar: #0f172a;
+        --sidebar-2: #172554;
+        --text: #0f172a;
+        --muted: #64748b;
+        --line: #d9e2ec;
+        --primary: #2563eb;
+        --primary-dark: #1d4ed8;
+        --success: #16a34a;
+        --success-dark: #15803d;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
     }
 
     .stApp {
         background:
-            radial-gradient(circle at top left, rgba(90, 169, 255, 0.16), transparent 30%),
-            radial-gradient(circle at top right, rgba(34, 197, 94, 0.10), transparent 25%),
-            linear-gradient(180deg, #07111f 0%, #0b1830 55%, #07111f 100%);
+            radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 25%),
+            linear-gradient(180deg, #f8fbff 0%, #f4f7fb 45%, #eef4fa 100%);
         color: var(--text);
     }
 
     .block-container {
-        padding-top: 1.5rem;
+        padding-top: 1.2rem;
         padding-bottom: 2rem;
+        max-width: 1500px;
     }
 
-    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5,
-    .stApp p, .stApp label, .stApp div {
+    .stApp, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5,
+    .stApp p, .stApp label, .stApp div, .stMarkdown {
         color: var(--text);
     }
 
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, rgba(10, 22, 39, 0.96), rgba(16, 33, 58, 0.96));
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 100%);
+        border-right: 1px solid rgba(255,255,255,0.08);
     }
 
     section[data-testid="stSidebar"] .stMarkdown,
@@ -63,25 +73,25 @@ st.markdown(
     section[data-testid="stSidebar"] label,
     section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] div {
-        color: var(--text) !important;
+        color: #f8fafc !important;
     }
 
     .hero {
         position: relative;
         overflow: hidden;
-        background: linear-gradient(135deg, rgba(8, 21, 40, 0.92), rgba(17, 60, 118, 0.80));
-        border: 1px solid var(--border);
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 24px;
-        padding: 28px 30px;
-        margin-bottom: 20px;
-        box-shadow: var(--shadow);
+        padding: 30px 32px;
+        margin-bottom: 18px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.20);
     }
 
     .hero::before {
         content: "";
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at 85% 20%, rgba(90, 169, 255, 0.28), transparent 22%);
+        background: radial-gradient(circle at 88% 20%, rgba(255,255,255,0.16), transparent 24%);
         pointer-events: none;
     }
 
@@ -89,32 +99,32 @@ st.markdown(
         display: inline-block;
         padding: 6px 12px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.10);
-        color: #d7e8ff;
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.14);
+        color: #dbeafe;
         font-size: 0.82rem;
-        letter-spacing: 0.04em;
+        font-weight: 700;
+        letter-spacing: 0.03em;
         margin-bottom: 12px;
     }
 
     .hero-title {
-        font-size: 2.6rem;
+        font-size: 2.5rem;
         font-weight: 800;
         margin: 0;
-        line-height: 1.1;
+        line-height: 1.08;
         color: #ffffff !important;
     }
 
     .hero-subtitle {
         margin-top: 10px;
-        color: var(--muted) !important;
+        color: #dbeafe !important;
         font-size: 1rem;
     }
 
     .section-card {
-        background: var(--panel);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--border);
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        border: 1px solid var(--line);
         border-radius: 20px;
         padding: 18px 20px;
         box-shadow: var(--shadow);
@@ -123,63 +133,91 @@ st.markdown(
 
     .section-title {
         font-size: 1.05rem;
-        font-weight: 700;
-        margin: 0 0 2px 0;
-        color: #ffffff !important;
+        font-weight: 800;
+        margin: 0 0 3px 0;
+        color: #0f172a !important;
     }
 
     .section-subtitle {
         margin: 0;
         color: var(--muted) !important;
-        font-size: 0.92rem;
+        font-size: 0.93rem;
     }
+
+    .status-pill-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 2px;
+        margin-bottom: 18px;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+    }
+
+    .pill-blue { color: #1d4ed8; }
+    .pill-green { color: #15803d; }
+    .pill-amber { color: #b45309; }
 
     div[data-testid="metric-container"] {
-        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(241,247,255,0.96));
-        border: 1px solid rgba(90, 169, 255, 0.18);
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+        border: 1px solid #dbe7f3;
         border-radius: 18px;
         padding: 18px 16px;
-        box-shadow: 0 12px 28px rgba(4, 14, 28, 0.24);
-    }
-
-    div[data-testid="metric-container"] label,
-    div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
-        color: #10233d !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
     }
 
     div[data-testid="metric-container"] label {
+        color: #475569 !important;
         font-weight: 700;
     }
 
+    div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
+        color: #0f172a !important;
+        font-weight: 800;
+    }
+
     [data-testid="stFileUploader"] section {
-        background: rgba(255,255,255,0.96) !important;
+        background: rgba(255,255,255,0.98) !important;
         border-radius: 16px !important;
-        border: 1px dashed rgba(16, 35, 61, 0.20) !important;
-        padding: 6px !important;
+        border: 2px dashed #bfd3ea !important;
+        padding: 8px !important;
     }
 
     [data-testid="stFileUploader"] section p,
     [data-testid="stFileUploader"] section span,
     [data-testid="stFileUploader"] small,
     [data-testid="stFileUploader"] section div {
-        color: #163153 !important;
+        color: #0f172a !important;
     }
 
-    [data-testid="stFileUploader"] button,
-    .stButton > button {
-        background: linear-gradient(135deg, #27c46b, #159f53) !important;
-        color: white !important;
+    .stButton > button,
+    [data-testid="stFileUploader"] button {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
         border: none !important;
-        border-radius: 12px !important;
-        font-weight: 700 !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-        box-shadow: 0 10px 18px rgba(21, 159, 83, 0.22);
+        border-radius: 14px !important;
+        font-weight: 800 !important;
+        padding: 0.72rem 1rem !important;
+        box-shadow: 0 12px 22px rgba(37, 99, 235, 0.28) !important;
+        transition: all 0.16s ease;
     }
 
-    [data-testid="stFileUploader"] button:hover,
-    .stButton > button:hover {
+    .stButton > button:hover,
+    [data-testid="stFileUploader"] button:hover {
         transform: translateY(-1px);
-        opacity: 0.96;
+        box-shadow: 0 16px 28px rgba(37, 99, 235, 0.32) !important;
+        opacity: 0.98;
     }
 
     div[data-baseweb="select"] > div,
@@ -187,12 +225,13 @@ st.markdown(
     .stDateInput > div > div,
     .stNumberInput > div > div {
         border-radius: 12px !important;
+        border-color: #cbd5e1 !important;
     }
 
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
+        background: #f8fbff;
+        border: 1px solid #dbe7f3;
         padding: 8px;
         border-radius: 16px;
     }
@@ -200,66 +239,47 @@ st.markdown(
     .stTabs [data-baseweb="tab"] {
         height: 48px;
         border-radius: 12px;
-        color: #d8e7fa;
-        font-weight: 700;
+        color: #334155;
+        font-weight: 800;
         background: transparent;
     }
 
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, rgba(90,169,255,0.18), rgba(90,169,255,0.10)) !important;
-        border: 1px solid rgba(90,169,255,0.28) !important;
-        color: #ffffff !important;
+        background: linear-gradient(135deg, #e0ecff, #eef5ff) !important;
+        border: 1px solid #bcd2f5 !important;
+        color: #1d4ed8 !important;
     }
 
     div[data-testid="stDataFrame"] {
-        border: 1px solid rgba(255,255,255,0.10);
+        border: 1px solid #dbe7f3;
         border-radius: 18px;
         overflow: hidden;
         box-shadow: var(--shadow);
+        background: white;
     }
 
     .stAlert {
         border-radius: 16px !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
+        border: 1px solid #dbe7f3 !important;
     }
-
-    .status-pill-wrap {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 8px;
-    }
-
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        font-size: 0.84rem;
-        font-weight: 700;
-        border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .pill-blue { background: rgba(90, 169, 255, 0.12); color: #dcedff; }
-    .pill-green { background: rgba(34, 197, 94, 0.14); color: #dcffe9; }
-    .pill-amber { background: rgba(251, 191, 36, 0.14); color: #fff0c2; }
 
     hr {
-        border-color: rgba(255,255,255,0.10);
+        border-color: #dbe7f3;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- HEADER SECTION ---
+# =========================================================
+# HEADER
+# =========================================================
 st.markdown(
     """
     <div class="hero">
         <div class="hero-badge">Fleet Audit • Geofencing • Tracker Validation</div>
         <h1 class="hero-title">🚛 VTCS Auditor Pro</h1>
-        <p class="hero-subtitle">Precision fleet auditing with a cleaner executive dashboard and a modern operator-first interface.</p>
+        <p class="hero-subtitle">Professional fleet audit dashboard with clearer analytics, stronger validation, and improved operator experience.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -268,15 +288,17 @@ st.markdown(
 st.markdown(
     """
     <div class="status-pill-wrap">
-        <div class="status-pill pill-blue">📈 Operational analytics</div>
-        <div class="status-pill pill-green">📍 Geofence compliance</div>
+        <div class="status-pill pill-blue">📈 Executive analytics</div>
+        <div class="status-pill pill-green">📍 Geofence validation</div>
         <div class="status-pill pill-amber">⏱ Delay monitoring</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-# --- HELPER: HAVERSINE ---
+# =========================================================
+# HELPERS
+# =========================================================
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371000
     phi1, phi2 = radians(lat1), radians(lat2)
@@ -285,18 +307,21 @@ def haversine(lat1, lon1, lat2, lon2):
     a = sin(dphi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(dlambda / 2) ** 2
     return 2 * R * asin(sqrt(a))
 
+
 def normalize_name(value):
     if pd.isna(value):
         return ""
     value = str(value).strip().lower()
     value = Path(value).stem
-    value = re.sub(r'[^a-z0-9]+', '', value)
+    value = re.sub(r"[^a-z0-9]+", "", value)
     return value
+
 
 def load_data_file(uploaded_file):
     if uploaded_file.name.lower().endswith("xlsx"):
         return pd.read_excel(uploaded_file)
     return pd.read_csv(uploaded_file)
+
 
 def prepare_tracking_df(track_df):
     track_df = track_df.copy()
@@ -306,7 +331,7 @@ def prepare_tracking_df(track_df):
             row_values = [str(val).strip() for val in track_df.iloc[i].values]
             if "Time" in row_values:
                 track_df.columns = row_values
-                track_df = track_df.iloc[i + 1:].reset_index(drop=True)
+                track_df = track_df.iloc[i + 1 :].reset_index(drop=True)
                 break
 
     track_df.columns = [str(c).strip() for c in track_df.columns]
@@ -317,7 +342,14 @@ def prepare_tracking_df(track_df):
     if "Status" in track_df.columns:
         track_df["Status"] = track_df["Status"].astype(str)
 
+    if "Latitude" in track_df.columns:
+        track_df["Latitude"] = pd.to_numeric(track_df["Latitude"], errors="coerce")
+
+    if "Longitude" in track_df.columns:
+        track_df["Longitude"] = pd.to_numeric(track_df["Longitude"], errors="coerce")
+
     return track_df
+
 
 def find_matching_tracking_df(vehicle_name, tracking_files_map):
     v_key = normalize_name(vehicle_name)
@@ -331,34 +363,140 @@ def find_matching_tracking_df(vehicle_name, tracking_files_map):
 
     return None
 
+
+def prepare_geofence_file(geo_df):
+    geo_df = geo_df.copy()
+    geo_df.columns = [str(c).strip() for c in geo_df.columns]
+
+    # Case 1: Already separate columns
+    if "Latitude" in geo_df.columns and "Longitude" in geo_df.columns:
+        if "Name" not in geo_df.columns:
+            for col in ["TCP", "WE", "Location", "Zone", "Site"]:
+                if col in geo_df.columns:
+                    geo_df["Name"] = geo_df[col]
+                    break
+
+        if "Name" not in geo_df.columns:
+            geo_df["Name"] = [f"Zone {i+1}" for i in range(len(geo_df))]
+
+        if "Radius_Meters" not in geo_df.columns:
+            geo_df["Radius_Meters"] = 150
+
+        geo_df["Latitude"] = pd.to_numeric(geo_df["Latitude"], errors="coerce")
+        geo_df["Longitude"] = pd.to_numeric(geo_df["Longitude"], errors="coerce")
+        geo_df["Radius_Meters"] = pd.to_numeric(
+            geo_df["Radius_Meters"], errors="coerce"
+        ).fillna(150)
+
+        return geo_df.dropna(subset=["Latitude", "Longitude"]).reset_index(drop=True)
+
+    # Case 2: Combined Lat/Long column
+    latlong_col = None
+    for col in geo_df.columns:
+        col_key = str(col).strip().lower()
+        if col_key in ["lat/long", "lat,long", "lat long", "coordinates", "coord"]:
+            latlong_col = col
+            break
+
+    if latlong_col is not None:
+        split_vals = (
+            geo_df[latlong_col]
+            .astype(str)
+            .str.strip()
+            .str.rstrip(",")
+            .str.split(",", n=1, expand=True)
+        )
+
+        geo_df["Latitude"] = pd.to_numeric(split_vals[0].str.strip(), errors="coerce")
+        geo_df["Longitude"] = pd.to_numeric(split_vals[1].str.strip(), errors="coerce")
+
+        if "TCP" in geo_df.columns:
+            geo_df["Name"] = geo_df["TCP"]
+        elif "WE" in geo_df.columns:
+            geo_df["Name"] = geo_df["WE"]
+        else:
+            geo_df["Name"] = [f"Zone {i+1}" for i in range(len(geo_df))]
+
+        if "Radius_Meters" not in geo_df.columns:
+            geo_df["Radius_Meters"] = 150
+
+        geo_df["Radius_Meters"] = pd.to_numeric(
+            geo_df["Radius_Meters"], errors="coerce"
+        ).fillna(150)
+
+        return geo_df.dropna(subset=["Latitude", "Longitude"]).reset_index(drop=True)
+
+    raise ValueError(
+        "Invalid geofence file format. Use either [Name, Latitude, Longitude] "
+        "or a file containing [TCP/WE, Lat/Long]."
+    )
+
+
+def vehicle_palette(vehicle_name):
+    vehicle_name = str(vehicle_name).strip().upper()
+
+    # DUMPER family -> blues
+    if vehicle_name.startswith("DUMPER"):
+        return "#2563eb"
+
+    # TT family -> greens
+    if vehicle_name.startswith("TT"):
+        return "#16a34a"
+
+    # Others -> slate
+    return "#64748b"
+
+
+def vehicle_group(vehicle_name):
+    vehicle_name = str(vehicle_name).strip().upper()
+    if vehicle_name.startswith("DUMPER"):
+        return "DUMPER"
+    if vehicle_name.startswith("TT"):
+        return "TT"
+    return "OTHER"
+
+
+# =========================================================
+# SESSION STATE
+# =========================================================
 if "geo_data" not in st.session_state:
     st.session_state.geo_data = None
 
-# --- SIDEBAR ---
+# =========================================================
+# SIDEBAR
+# =========================================================
 with st.sidebar:
-    st.image("https://img.icons8.com/fluency/96/truck.png", width=84)
+    st.image("https://img.icons8.com/fluency/96/truck.png", width=80)
     st.markdown("### Control Panel")
-    st.caption("Upload source files and manage geofence settings.")
+    st.caption("Upload source files, tracker files, and geofence locations.")
 
     vtcs_file = st.file_uploader("1. VTCS Daily Data", type=["xlsx", "csv"])
 
     tracking_files = st.file_uploader(
         "2. Tracker Portal Data",
         type=["xlsx", "csv"],
-        accept_multiple_files=True
+        accept_multiple_files=True,
+        help="Upload separate tracker file for each vehicle. File name should match vehicle name."
     )
 
     st.divider()
     st.markdown("### 📍 Geofence Config")
+
     with st.expander("TCP & WE Settings", expanded=True):
         geo_upload = st.file_uploader("Upload Coordinate File", type=["xlsx", "csv"])
+
         if geo_upload:
-            st.session_state.geo_data = (
-                pd.read_excel(geo_upload)
-                if geo_upload.name.endswith("xlsx")
-                else pd.read_csv(geo_upload)
-            )
-            st.success("Coordinates linked successfully")
+            try:
+                raw_geo_df = (
+                    pd.read_excel(geo_upload)
+                    if geo_upload.name.lower().endswith("xlsx")
+                    else pd.read_csv(geo_upload)
+                )
+                st.session_state.geo_data = prepare_geofence_file(raw_geo_df)
+                st.success("Geofence zones linked successfully")
+            except Exception as e:
+                st.session_state.geo_data = None
+                st.error(f"Geofence file error: {e}")
 
         if st.session_state.geo_data is not None:
             st.info(f"Active Zones: {len(st.session_state.geo_data)}")
@@ -366,7 +504,9 @@ with st.sidebar:
                 st.session_state.geo_data = None
                 st.rerun()
 
-# --- MAIN PROCESSING LOGIC ---
+# =========================================================
+# MAIN PROCESSING
+# =========================================================
 def process_audit(vtcs_df, tracking_files_map=None):
     vtcs_df = vtcs_df.copy()
 
@@ -382,8 +522,9 @@ def process_audit(vtcs_df, tracking_files_map=None):
     vtcs_df["Duration_Mins"] = (
         vtcs_df["Time Out"] - vtcs_df["Time In"]
     ).dt.total_seconds() / 60
+
     vtcs_df["Time_Status"] = vtcs_df["Duration_Mins"].apply(
-        lambda x: "🚨 Suspicious (>30m)" if x > 30 else "✅ Normal"
+        lambda x: "🚨 Suspicious (>30m)" if pd.notna(x) and x > 30 else "✅ Normal"
     )
 
     if tracking_files_map:
@@ -392,9 +533,11 @@ def process_audit(vtcs_df, tracking_files_map=None):
         for _, row in vtcs_df.iterrows():
             vehicle_name = row.get("Vehicle", "")
             track_df = find_matching_tracking_df(vehicle_name, tracking_files_map)
+
             matched_files.append(vehicle_name if track_df is not None else "No file matched")
 
             t_time = row["Time In"]
+
             if track_df is None:
                 gps_audit.append("❓ No Tracking File")
                 zone_check.append("Unknown")
@@ -422,30 +565,38 @@ def process_audit(vtcs_df, tracking_files_map=None):
                 if "Status" in pings.columns:
                     stts = pings["Status"].astype(str).str.lower().values
                     valid_idle = any(
-                        keyword in s
-                        for s in stts
-                        for keyword in ["idle", "parked", "stopped"]
+                        keyword in s for s in stts for keyword in ["idle", "parked", "stopped"]
                     )
                     gps_audit.append("✅ Verified" if valid_idle else "❌ Moving")
                 else:
                     gps_audit.append("❓ Status Missing")
 
                 z_found = "❌ Outside Zone"
+
                 if (
                     st.session_state.geo_data is not None
                     and "Latitude" in pings.columns
                     and "Longitude" in pings.columns
                 ):
                     valid_ping = pings.dropna(subset=["Latitude", "Longitude"])
-                    if not valid_ping.empty:
+                    if not valid_ping.empty and {"Name", "Latitude", "Longitude"}.issubset(
+                        st.session_state.geo_data.columns
+                    ):
                         v_lat = valid_ping.iloc[0]["Latitude"]
                         v_lon = valid_ping.iloc[0]["Longitude"]
 
                         for _, loc in st.session_state.geo_data.iterrows():
-                            if (
-                                haversine(v_lat, v_lon, loc["Latitude"], loc["Longitude"])
-                                <= loc.get("Radius_Meters", 150)
-                            ):
+                            if pd.isna(loc["Latitude"]) or pd.isna(loc["Longitude"]):
+                                continue
+
+                            radius = (
+                                loc["Radius_Meters"]
+                                if "Radius_Meters" in st.session_state.geo_data.columns
+                                and pd.notna(loc.get("Radius_Meters"))
+                                else 150
+                            )
+
+                            if haversine(v_lat, v_lon, loc["Latitude"], loc["Longitude"]) <= radius:
                                 z_found = f"✅ {loc['Name']}"
                                 break
 
@@ -458,8 +609,15 @@ def process_audit(vtcs_df, tracking_files_map=None):
     return vtcs_df
 
 
+# =========================================================
+# APP BODY
+# =========================================================
 if vtcs_file:
-    df_vtcs = pd.read_excel(vtcs_file) if vtcs_file.name.endswith("xlsx") else pd.read_csv(vtcs_file)
+    df_vtcs = (
+        pd.read_excel(vtcs_file)
+        if vtcs_file.name.lower().endswith("xlsx")
+        else pd.read_csv(vtcs_file)
+    )
 
     tracking_files_map = {}
     if tracking_files:
@@ -474,87 +632,152 @@ if vtcs_file:
 
     results = process_audit(df_vtcs, tracking_files_map if tracking_files_map else None)
 
-    # --- KPI METRICS ---
+    # =====================================================
+    # KPI METRICS
+    # =====================================================
     st.markdown(
         """
         <div class="section-card">
             <p class="section-title">Executive KPIs</p>
-            <p class="section-subtitle">A fast snapshot of tonnage, trip activity, delays, and GPS validation.</p>
+            <p class="section-subtitle">A concise overview of fleet output, delays, and GPS validation status.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    kpi_cols = st.columns(4)
-    kpi_cols[0].metric("Total Tonnage", f"{results['Tonnage'].sum():.1f} T")
-    kpi_cols[1].metric("Trip Count", len(results))
-    kpi_cols[2].metric("Delayed (>30m)", len(results[results["Time_Status"].str.contains("🚨")]))
-    if "GPS_Audit" in results.columns:
-        kpi_cols[3].metric("GPS Conflicts", len(results[results["GPS_Audit"] == "❌ Moving"]))
-    else:
-        kpi_cols[3].metric("GPS Conflicts", "—")
+    delayed_count = len(results[results["Time_Status"].str.contains("🚨", na=False)])
+    gps_conflicts = (
+        len(results[results["GPS_Audit"] == "❌ Moving"])
+        if "GPS_Audit" in results.columns
+        else 0
+    )
 
-    # --- ANALYTICS CHARTS ---
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Total Tonnage", f"{results['Tonnage'].sum():.1f} T")
+    k2.metric("Trip Count", len(results))
+    k3.metric("Delayed (>30m)", delayed_count)
+    k4.metric("GPS Conflicts", gps_conflicts if "GPS_Audit" in results.columns else "—")
+
+    # =====================================================
+    # ANALYTICS
+    # =====================================================
     st.markdown(
         """
         <div class="section-card">
-            <p class="section-title">📊 Operational Overview</p>
-            <p class="section-subtitle">Vehicle-wise tonnage and trip distribution with improved visual hierarchy.</p>
+            <p class="section-title">Operational Overview</p>
+            <p class="section-subtitle">Clear vehicle-wise charts with category-based coloring for DUMPER and TT fleet types.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    c1, c2 = st.columns(2)
     v_stats = results.groupby("Vehicle").agg({"Tonnage": "sum", "Data ID": "count"}).reset_index()
     v_stats.columns = ["Vehicle", "Tons", "Trips"]
+    v_stats["Color"] = v_stats["Vehicle"].apply(vehicle_palette)
+    v_stats["Group"] = v_stats["Vehicle"].apply(vehicle_group)
 
-    tons_chart = px.bar(
-        v_stats,
-        x="Vehicle",
-        y="Tons",
-        template="plotly_white",
-        color="Tons",
-        color_continuous_scale="Blues",
-        title="Tonnage by Vehicle",
-    )
-    tons_chart.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(255,255,255,0.96)",
-        margin=dict(l=10, r=10, t=56, b=10),
-        title_font_size=18,
-        xaxis_title=None,
-        yaxis_title="Tons",
-        coloraxis_showscale=False,
-    )
-    tons_chart.update_traces(marker_line_width=0, hovertemplate="Vehicle=%{x}<br>Tons=%{y:.2f}<extra></extra>")
-
-    trips_chart = px.bar(
-        v_stats,
-        x="Vehicle",
-        y="Trips",
-        template="plotly_white",
-        color="Trips",
-        color_continuous_scale="Greens",
-        title="Trips by Vehicle",
-    )
-    trips_chart.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(255,255,255,0.96)",
-        margin=dict(l=10, r=10, t=56, b=10),
-        title_font_size=18,
-        xaxis_title=None,
-        yaxis_title="Trips",
-        coloraxis_showscale=False,
-    )
-    trips_chart.update_traces(marker_line_width=0, hovertemplate="Vehicle=%{x}<br>Trips=%{y}<extra></extra>")
+    c1, c2 = st.columns(2)
 
     with c1:
-        st.plotly_chart(tons_chart, use_container_width=True)
-    with c2:
-        st.plotly_chart(trips_chart, use_container_width=True)
+        tons_fig = go.Figure()
+        tons_fig.add_trace(
+            go.Bar(
+                x=v_stats["Vehicle"],
+                y=v_stats["Tons"],
+                marker=dict(
+                    color=v_stats["Color"],
+                    line=dict(color="#ffffff", width=1.5)
+                ),
+                text=[f"{x:.2f}" for x in v_stats["Tons"]],
+                textposition="outside",
+                textfont=dict(size=12, color="#0f172a"),
+                hovertemplate="<b>%{x}</b><br>Tons: %{y:.2f}<extra></extra>",
+            )
+        )
+        tons_fig.update_layout(
+            title="Tonnage by Vehicle",
+            title_font=dict(size=19, color="#0f172a"),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="#ffffff",
+            margin=dict(l=20, r=20, t=60, b=20),
+            height=430,
+            xaxis=dict(
+                title="Vehicle",
+                tickfont=dict(size=11, color="#334155"),
+                title_font=dict(color="#334155"),
+                showgrid=False
+            ),
+            yaxis=dict(
+                title="Tons",
+                tickfont=dict(size=11, color="#334155"),
+                title_font=dict(color="#334155"),
+                gridcolor="#e2e8f0",
+                zerolinecolor="#cbd5e1"
+            ),
+            showlegend=False
+        )
+        st.plotly_chart(tons_fig, use_container_width=True)
 
-    # --- TABS ---
+    with c2:
+        trips_fig = go.Figure()
+        trips_fig.add_trace(
+            go.Bar(
+                x=v_stats["Vehicle"],
+                y=v_stats["Trips"],
+                marker=dict(
+                    color=v_stats["Color"],
+                    line=dict(color="#ffffff", width=1.5)
+                ),
+                text=[str(x) for x in v_stats["Trips"]],
+                textposition="outside",
+                textfont=dict(size=12, color="#0f172a"),
+                hovertemplate="<b>%{x}</b><br>Trips: %{y}<extra></extra>",
+            )
+        )
+        trips_fig.update_layout(
+            title="Trips by Vehicle",
+            title_font=dict(size=19, color="#0f172a"),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="#ffffff",
+            margin=dict(l=20, r=20, t=60, b=20),
+            height=430,
+            xaxis=dict(
+                title="Vehicle",
+                tickfont=dict(size=11, color="#334155"),
+                title_font=dict(color="#334155"),
+                showgrid=False
+            ),
+            yaxis=dict(
+                title="Trips",
+                tickfont=dict(size=11, color="#334155"),
+                title_font=dict(color="#334155"),
+                gridcolor="#e2e8f0",
+                zerolinecolor="#cbd5e1"
+            ),
+            showlegend=False
+        )
+        st.plotly_chart(trips_fig, use_container_width=True)
+
+    # =====================================================
+    # LEGEND
+    # =====================================================
+    st.markdown(
+        """
+        <div class="section-card">
+            <p class="section-title">Chart Color Reference</p>
+            <p class="section-subtitle">
+                <span style="font-weight:700;color:#2563eb;">■ DUMPER vehicles</span> &nbsp;&nbsp;
+                <span style="font-weight:700;color:#16a34a;">■ TT vehicles</span> &nbsp;&nbsp;
+                <span style="font-weight:700;color:#64748b;">■ Other vehicles</span>
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # =====================================================
+    # TABS
+    # =====================================================
     t1, t2 = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
 
     with t1:
@@ -562,16 +785,26 @@ if vtcs_file:
             """
             <div class="section-card">
                 <p class="section-title">Vehicle Summary</p>
-                <p class="section-subtitle">High-level fleet output summary for quick management review.</p>
+                <p class="section-subtitle">Management-ready summary with output, trips, and average duration by vehicle.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
+
         summ = results.groupby("Vehicle").agg(
             {"Tonnage": "sum", "Data ID": "count", "Duration_Mins": "mean"}
-        ).rename(columns={"Data ID": "Trips", "Tonnage": "Total Tons", "Duration_Mins": "Avg Mins"})
+        ).rename(
+            columns={
+                "Data ID": "Trips",
+                "Tonnage": "Total Tons",
+                "Duration_Mins": "Avg Mins"
+            }
+        )
+
         st.dataframe(
-            summ.style.background_gradient(cmap="Blues", subset=["Total Tons"]).format("{:.2f}"),
+            summ.style
+            .background_gradient(cmap="Blues", subset=["Total Tons"])
+            .format({"Total Tons": "{:.2f}", "Avg Mins": "{:.1f}"}),
             use_container_width=True,
             height=420,
         )
@@ -581,28 +814,31 @@ if vtcs_file:
             """
             <div class="section-card">
                 <p class="section-title">Detailed Audit Output</p>
-                <p class="section-subtitle">Operational event log with duration, tonnage, GPS checks, and zone validation.</p>
+                <p class="section-subtitle">Full event log including matching tracker file, GPS audit, and geofence result.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
+
         cols = ["Vehicle", "Time In", "Time Out", "Duration_Mins", "Tonnage", "Time_Status"]
+
         if "Tracking_File_Match" in results.columns:
             cols.append("Tracking_File_Match")
         if "GPS_Audit" in results.columns:
             cols.append("GPS_Audit")
         if "Zone_Check" in results.columns:
             cols.append("Zone_Check")
-        st.dataframe(results[cols], use_container_width=True, height=500)
+
+        st.dataframe(results[cols], use_container_width=True, height=520)
 
 else:
     st.markdown(
         """
         <div class="section-card">
             <p class="section-title">Ready to begin</p>
-            <p class="section-subtitle">Upload your VTCS and tracker files from the sidebar to generate the audit dashboard.</p>
+            <p class="section-subtitle">Upload VTCS data, tracker files, and geofence locations from the sidebar to generate the dashboard.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.info("💡 Getting Started: Upload your files in the sidebar.")
+    st.info("Upload files from the sidebar to start the fleet audit.")

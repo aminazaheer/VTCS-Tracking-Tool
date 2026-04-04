@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import timedelta
-import plotly.express as px
 import plotly.graph_objects as go
 from math import radians, cos, sin, asin, sqrt
 from pathlib import Path
@@ -19,50 +18,62 @@ st.set_page_config(
 )
 
 # =========================================================
-# PROFESSIONAL UI THEME
+# PROFESSIONAL UI STYLE
 # =========================================================
 st.markdown(
     """
     <style>
     :root {
-        --bg-main: #f4f7fb;
-        --bg-soft: #eaf0f7;
+        --bg-main: #f5f8fc;
+        --bg-soft: #eef4fb;
         --panel: #ffffff;
-        --panel-2: #f9fbfd;
-        --sidebar: #0f172a;
-        --sidebar-2: #172554;
-        --text: #0f172a;
-        --muted: #64748b;
-        --line: #d9e2ec;
-        --primary: #2563eb;
-        --primary-dark: #1d4ed8;
-        --success: #16a34a;
-        --success-dark: #15803d;
-        --warning: #d97706;
-        --danger: #dc2626;
-        --shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+        --panel-soft: #f8fbff;
+        --sidebar-dark: #0f1f46;
+        --sidebar-dark-2: #13295c;
+        --text: #15233b;
+        --muted: #6e7f99;
+        --line: #dde6f2;
+
+        --blue: #3b82f6;
+        --blue-soft: #eaf3ff;
+
+        --green: #22c55e;
+        --green-soft: #ebfbf1;
+
+        --orange: #f59e0b;
+        --orange-soft: #fff4e4;
+
+        --navy: #183b8c;
+        --navy-deep: #0e2459;
+
+        --shadow: 0 14px 34px rgba(19, 41, 92, 0.10);
+        --shadow-strong: 0 18px 40px rgba(19, 41, 92, 0.16);
+        --radius-xl: 24px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
     }
 
     .stApp {
         background:
-            radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 25%),
-            linear-gradient(180deg, #f8fbff 0%, #f4f7fb 45%, #eef4fa 100%);
+            radial-gradient(circle at top left, rgba(59,130,246,0.10), transparent 25%),
+            radial-gradient(circle at top right, rgba(34,197,94,0.08), transparent 24%),
+            linear-gradient(180deg, #f9fbfe 0%, #f5f8fc 48%, #edf3fa 100%);
         color: var(--text);
     }
 
     .block-container {
-        padding-top: 1.2rem;
+        max-width: 1520px;
+        padding-top: 1.1rem;
         padding-bottom: 2rem;
-        max-width: 1500px;
     }
 
-    .stApp, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5,
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5,
     .stApp p, .stApp label, .stApp div, .stMarkdown {
         color: var(--text);
     }
 
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 100%);
+        background: linear-gradient(180deg, var(--sidebar-dark) 0%, var(--sidebar-dark-2) 100%);
         border-right: 1px solid rgba(255,255,255,0.08);
     }
 
@@ -72,133 +83,184 @@ st.markdown(
     section[data-testid="stSidebar"] h3,
     section[data-testid="stSidebar"] label,
     section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] div {
-        color: #f8fafc !important;
+    section[data-testid="stSidebar"] div,
+    section[data-testid="stSidebar"] span {
+        color: #f8fbff !important;
     }
 
     .hero {
         position: relative;
         overflow: hidden;
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 24px;
-        padding: 30px 32px;
+        background:
+            radial-gradient(circle at 85% 20%, rgba(255,255,255,0.16), transparent 24%),
+            radial-gradient(circle at 15% 20%, rgba(147,197,253,0.22), transparent 18%),
+            linear-gradient(135deg, #112654 0%, #1d4ed8 52%, #2563eb 100%);
+        border-radius: 28px;
+        padding: 30px 34px;
+        border: 1px solid rgba(255,255,255,0.10);
+        box-shadow: 0 20px 44px rgba(17, 38, 84, 0.22);
         margin-bottom: 18px;
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.20);
-    }
-
-    .hero::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 88% 20%, rgba(255,255,255,0.16), transparent 24%);
-        pointer-events: none;
     }
 
     .hero-badge {
-        display: inline-block;
-        padding: 6px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 14px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.10);
-        border: 1px solid rgba(255,255,255,0.14);
-        color: #dbeafe;
-        font-size: 0.82rem;
+        background: rgba(255,255,255,0.14);
+        border: 1px solid rgba(255,255,255,0.18);
+        color: #eaf2ff !important;
+        font-size: 0.83rem;
         font-weight: 700;
-        letter-spacing: 0.03em;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
 
     .hero-title {
-        font-size: 2.5rem;
-        font-weight: 800;
+        font-size: 2.8rem;
+        line-height: 1.05;
         margin: 0;
-        line-height: 1.08;
+        font-weight: 850;
         color: #ffffff !important;
+        letter-spacing: -0.02em;
     }
 
     .hero-subtitle {
-        margin-top: 10px;
-        color: #dbeafe !important;
-        font-size: 1rem;
+        margin-top: 12px;
+        color: #e3edff !important;
+        font-size: 1.02rem;
+        max-width: 880px;
     }
 
-    .section-card {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    .soft-card {
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
         border: 1px solid var(--line);
-        border-radius: 20px;
+        border-radius: var(--radius-xl);
         padding: 18px 20px;
         box-shadow: var(--shadow);
         margin-bottom: 18px;
     }
 
-    .section-title {
+    .soft-card-title {
         font-size: 1.05rem;
         font-weight: 800;
-        margin: 0 0 3px 0;
-        color: #0f172a !important;
+        margin: 0 0 4px 0;
+        color: var(--text) !important;
     }
 
-    .section-subtitle {
+    .soft-card-subtitle {
         margin: 0;
         color: var(--muted) !important;
-        font-size: 0.93rem;
+        font-size: 0.94rem;
     }
 
-    .status-pill-wrap {
+    .insight-row {
         display: flex;
+        gap: 12px;
         flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 2px;
         margin-bottom: 18px;
     }
 
-    .status-pill {
+    .insight-pill {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 10px 14px;
+        padding: 11px 16px;
         border-radius: 999px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        border: 1px solid var(--line);
-        background: #ffffff;
-        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+        font-weight: 800;
+        font-size: 0.88rem;
+        border: 1px solid transparent;
+        box-shadow: 0 8px 18px rgba(21, 35, 59, 0.06);
     }
 
-    .pill-blue { color: #1d4ed8; }
-    .pill-green { color: #15803d; }
-    .pill-amber { color: #b45309; }
+    .pill-blue {
+        background: var(--blue-soft);
+        color: #1d4ed8 !important;
+        border-color: #cfe1ff;
+    }
+
+    .pill-green {
+        background: var(--green-soft);
+        color: #15803d !important;
+        border-color: #cfeedd;
+    }
+
+    .pill-orange {
+        background: var(--orange-soft);
+        color: #c27007 !important;
+        border-color: #ffe0b2;
+    }
+
+    .kpi-shell {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        border: 1px solid #dfe8f3;
+        border-radius: 22px;
+        padding: 8px;
+        box-shadow: 0 16px 34px rgba(17, 38, 84, 0.08);
+        margin-bottom: 18px;
+    }
 
     div[data-testid="metric-container"] {
-        background: linear-gradient(180deg, #ffffff, #f8fbff);
+        background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
         border: 1px solid #dbe7f3;
         border-radius: 18px;
-        padding: 18px 16px;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        padding: 20px 16px;
+        box-shadow: 0 10px 26px rgba(17, 38, 84, 0.06);
     }
 
     div[data-testid="metric-container"] label {
-        color: #475569 !important;
-        font-weight: 700;
+        color: #6b7c93 !important;
+        font-weight: 800 !important;
+        font-size: 0.92rem !important;
     }
 
     div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
-        color: #0f172a !important;
+        color: #102447 !important;
+        font-weight: 900 !important;
+        font-size: 2rem !important;
+    }
+
+    .mini-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin: 4px 0 20px 0;
+    }
+
+    .mini-kpi-card {
+        background: #ffffff;
+        border: 1px solid #deebf7;
+        border-radius: 18px;
+        padding: 14px 16px;
+        box-shadow: 0 10px 24px rgba(17, 38, 84, 0.07);
+    }
+
+    .mini-kpi-label {
+        color: #6f8197 !important;
+        font-size: 0.82rem;
         font-weight: 800;
+        margin-bottom: 6px;
+    }
+
+    .mini-kpi-value {
+        color: #102447 !important;
+        font-size: 1.1rem;
+        font-weight: 900;
     }
 
     [data-testid="stFileUploader"] section {
         background: rgba(255,255,255,0.98) !important;
-        border-radius: 16px !important;
-        border: 2px dashed #bfd3ea !important;
-        padding: 8px !important;
+        border-radius: 18px !important;
+        border: 2px dashed #c8d7ea !important;
+        padding: 9px !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
     }
 
     [data-testid="stFileUploader"] section p,
     [data-testid="stFileUploader"] section span,
     [data-testid="stFileUploader"] small,
     [data-testid="stFileUploader"] section div {
-        color: #0f172a !important;
+        color: #173153 !important;
     }
 
     .stButton > button,
@@ -207,25 +269,37 @@ st.markdown(
         color: #ffffff !important;
         border: none !important;
         border-radius: 14px !important;
-        font-weight: 800 !important;
+        font-weight: 850 !important;
         padding: 0.72rem 1rem !important;
-        box-shadow: 0 12px 22px rgba(37, 99, 235, 0.28) !important;
-        transition: all 0.16s ease;
+        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24) !important;
     }
 
     .stButton > button:hover,
     [data-testid="stFileUploader"] button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 16px 28px rgba(37, 99, 235, 0.32) !important;
-        opacity: 0.98;
+        box-shadow: 0 14px 28px rgba(37, 99, 235, 0.30) !important;
     }
 
-    div[data-baseweb="select"] > div,
-    .stTextInput > div > div,
-    .stDateInput > div > div,
-    .stNumberInput > div > div {
-        border-radius: 12px !important;
-        border-color: #cbd5e1 !important;
+    .sidebar-panel {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 20px;
+        padding: 14px 14px 10px 14px;
+        margin-bottom: 14px;
+        backdrop-filter: blur(6px);
+    }
+
+    .sidebar-title {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #ffffff !important;
+        margin-bottom: 6px;
+    }
+
+    .sidebar-subtitle {
+        font-size: 0.87rem;
+        color: #d4e1ff !important;
+        margin-bottom: 6px;
     }
 
     .stTabs [data-baseweb="tab-list"] {
@@ -233,38 +307,46 @@ st.markdown(
         background: #f8fbff;
         border: 1px solid #dbe7f3;
         padding: 8px;
-        border-radius: 16px;
+        border-radius: 18px;
     }
 
     .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        border-radius: 12px;
-        color: #334155;
-        font-weight: 800;
+        height: 50px;
+        border-radius: 14px;
+        color: #42556e;
+        font-weight: 850;
         background: transparent;
     }
 
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #e0ecff, #eef5ff) !important;
-        border: 1px solid #bcd2f5 !important;
+        background: linear-gradient(135deg, #e9f2ff, #f3f8ff) !important;
+        border: 1px solid #c7daf4 !important;
         color: #1d4ed8 !important;
     }
 
     div[data-testid="stDataFrame"] {
-        border: 1px solid #dbe7f3;
+        border: 1px solid #dfe8f3;
         border-radius: 18px;
         overflow: hidden;
         box-shadow: var(--shadow);
-        background: white;
+        background: #ffffff;
     }
 
     .stAlert {
         border-radius: 16px !important;
-        border: 1px solid #dbe7f3 !important;
+        border: 1px solid #d9e6f3 !important;
     }
 
-    hr {
-        border-color: #dbe7f3;
+    @media (max-width: 1100px) {
+        .mini-kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 700px) {
+        .mini-kpi-grid {
+            grid-template-columns: 1fr;
+        }
     }
     </style>
     """,
@@ -279,7 +361,10 @@ st.markdown(
     <div class="hero">
         <div class="hero-badge">Fleet Audit • Geofencing • Tracker Validation</div>
         <h1 class="hero-title">🚛 VTCS Auditor Pro</h1>
-        <p class="hero-subtitle">Professional fleet audit dashboard with clearer analytics, stronger validation, and improved operator experience.</p>
+        <p class="hero-subtitle">
+            Smart fleet audit dashboard with refined analytics, stronger geofence validation,
+            cleaner operator workflow, and a more professional visual interface.
+        </p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -287,10 +372,10 @@ st.markdown(
 
 st.markdown(
     """
-    <div class="status-pill-wrap">
-        <div class="status-pill pill-blue">📈 Executive analytics</div>
-        <div class="status-pill pill-green">📍 Geofence validation</div>
-        <div class="status-pill pill-amber">⏱ Delay monitoring</div>
+    <div class="insight-row">
+        <div class="insight-pill pill-blue">📊 Executive analytics</div>
+        <div class="insight-pill pill-green">📍 Geofence validation</div>
+        <div class="insight-pill pill-orange">⏱ Delay monitoring</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -331,7 +416,7 @@ def prepare_tracking_df(track_df):
             row_values = [str(val).strip() for val in track_df.iloc[i].values]
             if "Time" in row_values:
                 track_df.columns = row_values
-                track_df = track_df.iloc[i + 1 :].reset_index(drop=True)
+                track_df = track_df.iloc[i + 1:].reset_index(drop=True)
                 break
 
     track_df.columns = [str(c).strip() for c in track_df.columns]
@@ -368,7 +453,6 @@ def prepare_geofence_file(geo_df):
     geo_df = geo_df.copy()
     geo_df.columns = [str(c).strip() for c in geo_df.columns]
 
-    # Case 1: Already separate columns
     if "Latitude" in geo_df.columns and "Longitude" in geo_df.columns:
         if "Name" not in geo_df.columns:
             for col in ["TCP", "WE", "Location", "Zone", "Site"]:
@@ -390,7 +474,6 @@ def prepare_geofence_file(geo_df):
 
         return geo_df.dropna(subset=["Latitude", "Longitude"]).reset_index(drop=True)
 
-    # Case 2: Combined Lat/Long column
     latlong_col = None
     for col in geo_df.columns:
         col_key = str(col).strip().lower()
@@ -428,32 +511,35 @@ def prepare_geofence_file(geo_df):
 
     raise ValueError(
         "Invalid geofence file format. Use either [Name, Latitude, Longitude] "
-        "or a file containing [TCP/WE, Lat/Long]."
+        "or [TCP/WE, Lat/Long]."
     )
 
 
-def vehicle_palette(vehicle_name):
-    vehicle_name = str(vehicle_name).strip().upper()
-
-    # DUMPER family -> blues
-    if vehicle_name.startswith("DUMPER"):
-        return "#2563eb"
-
-    # TT family -> greens
-    if vehicle_name.startswith("TT"):
-        return "#16a34a"
-
-    # Others -> slate
-    return "#64748b"
-
-
-def vehicle_group(vehicle_name):
-    vehicle_name = str(vehicle_name).strip().upper()
-    if vehicle_name.startswith("DUMPER"):
-        return "DUMPER"
-    if vehicle_name.startswith("TT"):
+def vehicle_family(vehicle_name):
+    name = str(vehicle_name).strip().upper()
+    if name.startswith("TT"):
         return "TT"
+    if name.startswith("DUMPER"):
+        return "DUMPER"
     return "OTHER"
+
+
+def tonnage_color(vehicle_name):
+    fam = vehicle_family(vehicle_name)
+    if fam == "TT":
+        return "#86efac"   # light green
+    if fam == "DUMPER":
+        return "#93c5fd"   # light blue
+    return "#fdba74"       # light orange
+
+
+def trips_color(vehicle_name):
+    fam = vehicle_family(vehicle_name)
+    if fam == "TT":
+        return "#22c55e"   # green
+    if fam == "DUMPER":
+        return "#3b82f6"   # blue
+    return "#f59e0b"       # orange
 
 
 # =========================================================
@@ -466,9 +552,19 @@ if "geo_data" not in st.session_state:
 # SIDEBAR
 # =========================================================
 with st.sidebar:
-    st.image("https://img.icons8.com/fluency/96/truck.png", width=80)
-    st.markdown("### Control Panel")
-    st.caption("Upload source files, tracker files, and geofence locations.")
+    st.image("https://img.icons8.com/fluency/96/truck.png", width=82)
+
+    st.markdown(
+        """
+        <div class="sidebar-panel">
+            <div class="sidebar-title">Control Panel</div>
+            <div class="sidebar-subtitle">
+                Upload source files, tracker files, and geofence locations with a cleaner professional workflow.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     vtcs_file = st.file_uploader("1. VTCS Daily Data", type=["xlsx", "csv"])
 
@@ -479,8 +575,17 @@ with st.sidebar:
         help="Upload separate tracker file for each vehicle. File name should match vehicle name."
     )
 
-    st.divider()
-    st.markdown("### 📍 Geofence Config")
+    st.markdown(
+        """
+        <div class="sidebar-panel" style="margin-top:10px;">
+            <div class="sidebar-title">📍 Geofence Config</div>
+            <div class="sidebar-subtitle">
+                Upload TCP / WE coordinates to enable zone checking in the audit log.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     with st.expander("TCP & WE Settings", expanded=True):
         geo_upload = st.file_uploader("Upload Coordinate File", type=["xlsx", "csv"])
@@ -533,7 +638,6 @@ def process_audit(vtcs_df, tracking_files_map=None):
         for _, row in vtcs_df.iterrows():
             vehicle_name = row.get("Vehicle", "")
             track_df = find_matching_tracking_df(vehicle_name, tracking_files_map)
-
             matched_files.append(vehicle_name if track_df is not None else "No file matched")
 
             t_time = row["Time In"]
@@ -608,7 +712,6 @@ def process_audit(vtcs_df, tracking_files_map=None):
 
     return vtcs_df
 
-
 # =========================================================
 # APP BODY
 # =========================================================
@@ -632,40 +735,60 @@ if vtcs_file:
 
     results = process_audit(df_vtcs, tracking_files_map if tracking_files_map else None)
 
-    # =====================================================
-    # KPI METRICS
-    # =====================================================
+    delayed_count = len(results[results["Time_Status"].str.contains("🚨", na=False)])
+    gps_conflicts = len(results[results["GPS_Audit"] == "❌ Moving"]) if "GPS_Audit" in results.columns else 0
+    avg_trip_time = results["Duration_Mins"].dropna().mean() if "Duration_Mins" in results.columns else 0
+    active_vehicles = results["Vehicle"].nunique() if "Vehicle" in results.columns else 0
+
     st.markdown(
         """
-        <div class="section-card">
-            <p class="section-title">Executive KPIs</p>
-            <p class="section-subtitle">A concise overview of fleet output, delays, and GPS validation status.</p>
+        <div class="soft-card">
+            <p class="soft-card-title">Executive KPIs</p>
+            <p class="soft-card-subtitle">A more prominent summary of core audit metrics for fast operational review.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    delayed_count = len(results[results["Time_Status"].str.contains("🚨", na=False)])
-    gps_conflicts = (
-        len(results[results["GPS_Audit"] == "❌ Moving"])
-        if "GPS_Audit" in results.columns
-        else 0
-    )
-
+    st.markdown('<div class="kpi-shell">', unsafe_allow_html=True)
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Total Tonnage", f"{results['Tonnage'].sum():.1f} T")
     k2.metric("Trip Count", len(results))
     k3.metric("Delayed (>30m)", delayed_count)
     k4.metric("GPS Conflicts", gps_conflicts if "GPS_Audit" in results.columns else "—")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # =====================================================
-    # ANALYTICS
-    # =====================================================
+    st.markdown(
+        f"""
+        <div class="mini-kpi-grid">
+            <div class="mini-kpi-card">
+                <div class="mini-kpi-label">Active Vehicles</div>
+                <div class="mini-kpi-value">{active_vehicles}</div>
+            </div>
+            <div class="mini-kpi-card">
+                <div class="mini-kpi-label">Average Trip Time</div>
+                <div class="mini-kpi-value">{0 if pd.isna(avg_trip_time) else round(avg_trip_time, 1)} mins</div>
+            </div>
+            <div class="mini-kpi-card">
+                <div class="mini-kpi-label">Geofence Status</div>
+                <div class="mini-kpi-value">{"Linked" if st.session_state.geo_data is not None else "Not Linked"}</div>
+            </div>
+            <div class="mini-kpi-card">
+                <div class="mini-kpi-label">Tracker Files</div>
+                <div class="mini-kpi-value">{len(tracking_files_map)}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown(
         """
-        <div class="section-card">
-            <p class="section-title">Operational Overview</p>
-            <p class="section-subtitle">Clear vehicle-wise charts with category-based coloring for DUMPER and TT fleet types.</p>
+        <div class="soft-card">
+            <p class="soft-card-title">Operational Overview</p>
+            <p class="soft-card-subtitle">
+                Enhanced vehicle-wise charts with distinct colors for DUMPER and TT vehicles, plus cleaner chart presentation.
+            </p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -673,8 +796,8 @@ if vtcs_file:
 
     v_stats = results.groupby("Vehicle").agg({"Tonnage": "sum", "Data ID": "count"}).reset_index()
     v_stats.columns = ["Vehicle", "Tons", "Trips"]
-    v_stats["Color"] = v_stats["Vehicle"].apply(vehicle_palette)
-    v_stats["Group"] = v_stats["Vehicle"].apply(vehicle_group)
+    v_stats["Tonnage_Color"] = v_stats["Vehicle"].apply(tonnage_color)
+    v_stats["Trips_Color"] = v_stats["Vehicle"].apply(trips_color)
 
     c1, c2 = st.columns(2)
 
@@ -685,34 +808,34 @@ if vtcs_file:
                 x=v_stats["Vehicle"],
                 y=v_stats["Tons"],
                 marker=dict(
-                    color=v_stats["Color"],
-                    line=dict(color="#ffffff", width=1.5)
+                    color=v_stats["Tonnage_Color"],
+                    line=dict(color="#ffffff", width=1.6)
                 ),
                 text=[f"{x:.2f}" for x in v_stats["Tons"]],
                 textposition="outside",
-                textfont=dict(size=12, color="#0f172a"),
-                hovertemplate="<b>%{x}</b><br>Tons: %{y:.2f}<extra></extra>",
+                textfont=dict(size=12, color="#16304f"),
+                hovertemplate="<b>%{x}</b><br>Tonnage: %{y:.2f} T<extra></extra>",
             )
         )
         tons_fig.update_layout(
             title="Tonnage by Vehicle",
-            title_font=dict(size=19, color="#0f172a"),
+            title_font=dict(size=20, color="#143155"),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="#ffffff",
-            margin=dict(l=20, r=20, t=60, b=20),
-            height=430,
+            margin=dict(l=20, r=20, t=58, b=20),
+            height=450,
             xaxis=dict(
                 title="Vehicle",
-                tickfont=dict(size=11, color="#334155"),
-                title_font=dict(color="#334155"),
+                tickfont=dict(size=11, color="#47617f"),
+                title_font=dict(size=13, color="#47617f"),
                 showgrid=False
             ),
             yaxis=dict(
                 title="Tons",
-                tickfont=dict(size=11, color="#334155"),
-                title_font=dict(color="#334155"),
-                gridcolor="#e2e8f0",
-                zerolinecolor="#cbd5e1"
+                tickfont=dict(size=11, color="#47617f"),
+                title_font=dict(size=13, color="#47617f"),
+                gridcolor="#e3edf8",
+                zerolinecolor="#d1dfef"
             ),
             showlegend=False
         )
@@ -725,67 +848,61 @@ if vtcs_file:
                 x=v_stats["Vehicle"],
                 y=v_stats["Trips"],
                 marker=dict(
-                    color=v_stats["Color"],
-                    line=dict(color="#ffffff", width=1.5)
+                    color=v_stats["Trips_Color"],
+                    line=dict(color="#ffffff", width=1.6)
                 ),
                 text=[str(x) for x in v_stats["Trips"]],
                 textposition="outside",
-                textfont=dict(size=12, color="#0f172a"),
+                textfont=dict(size=12, color="#16304f"),
                 hovertemplate="<b>%{x}</b><br>Trips: %{y}<extra></extra>",
             )
         )
         trips_fig.update_layout(
             title="Trips by Vehicle",
-            title_font=dict(size=19, color="#0f172a"),
+            title_font=dict(size=20, color="#143155"),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="#ffffff",
-            margin=dict(l=20, r=20, t=60, b=20),
-            height=430,
+            margin=dict(l=20, r=20, t=58, b=20),
+            height=450,
             xaxis=dict(
                 title="Vehicle",
-                tickfont=dict(size=11, color="#334155"),
-                title_font=dict(color="#334155"),
+                tickfont=dict(size=11, color="#47617f"),
+                title_font=dict(size=13, color="#47617f"),
                 showgrid=False
             ),
             yaxis=dict(
                 title="Trips",
-                tickfont=dict(size=11, color="#334155"),
-                title_font=dict(color="#334155"),
-                gridcolor="#e2e8f0",
-                zerolinecolor="#cbd5e1"
+                tickfont=dict(size=11, color="#47617f"),
+                title_font=dict(size=13, color="#47617f"),
+                gridcolor="#e3edf8",
+                zerolinecolor="#d1dfef"
             ),
             showlegend=False
         )
         st.plotly_chart(trips_fig, use_container_width=True)
 
-    # =====================================================
-    # LEGEND
-    # =====================================================
     st.markdown(
         """
-        <div class="section-card">
-            <p class="section-title">Chart Color Reference</p>
-            <p class="section-subtitle">
-                <span style="font-weight:700;color:#2563eb;">■ DUMPER vehicles</span> &nbsp;&nbsp;
-                <span style="font-weight:700;color:#16a34a;">■ TT vehicles</span> &nbsp;&nbsp;
-                <span style="font-weight:700;color:#64748b;">■ Other vehicles</span>
+        <div class="soft-card">
+            <p class="soft-card-title">Graph Color Guide</p>
+            <p class="soft-card-subtitle">
+                <span style="font-weight:800;color:#3b82f6;">■ DUMPER (blue)</span> &nbsp;&nbsp;
+                <span style="font-weight:800;color:#22c55e;">■ TT (green)</span> &nbsp;&nbsp;
+                <span style="font-weight:800;color:#f59e0b;">■ Other (orange)</span>
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # =====================================================
-    # TABS
-    # =====================================================
     t1, t2 = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
 
     with t1:
         st.markdown(
             """
-            <div class="section-card">
-                <p class="section-title">Vehicle Summary</p>
-                <p class="section-subtitle">Management-ready summary with output, trips, and average duration by vehicle.</p>
+            <div class="soft-card">
+                <p class="soft-card-title">Vehicle Summary</p>
+                <p class="soft-card-subtitle">Management-ready summary with trips, tonnage, and average cycle time by vehicle.</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -806,15 +923,15 @@ if vtcs_file:
             .background_gradient(cmap="Blues", subset=["Total Tons"])
             .format({"Total Tons": "{:.2f}", "Avg Mins": "{:.1f}"}),
             use_container_width=True,
-            height=420,
+            height=430,
         )
 
     with t2:
         st.markdown(
             """
-            <div class="section-card">
-                <p class="section-title">Detailed Audit Output</p>
-                <p class="section-subtitle">Full event log including matching tracker file, GPS audit, and geofence result.</p>
+            <div class="soft-card">
+                <p class="soft-card-title">Detailed Audit Output</p>
+                <p class="soft-card-subtitle">Complete operational log with tracker matching, GPS audit result, and zone validation.</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -834,9 +951,11 @@ if vtcs_file:
 else:
     st.markdown(
         """
-        <div class="section-card">
-            <p class="section-title">Ready to begin</p>
-            <p class="section-subtitle">Upload VTCS data, tracker files, and geofence locations from the sidebar to generate the dashboard.</p>
+        <div class="soft-card">
+            <p class="soft-card-title">Ready to begin</p>
+            <p class="soft-card-subtitle">
+                Upload VTCS data, tracker files, and geofence locations from the control panel to generate the audit dashboard.
+            </p>
         </div>
         """,
         unsafe_allow_html=True,

@@ -536,6 +536,61 @@ def vehicle_type_color(vehicle_name):
     return "#22c55e" if has_t_in_name(vehicle_name) else "#3b82f6"
 
 
+def find_zone_in_precheck_window(track_df, check_time, geo_df, window_minutes=60):
+    """
+    Check tracker coordinates from 1 hour before VTCS Time In up to Time In.
+    If any coordinate falls within any TCP/WE radius, return that zone name.
+    """
+    if track_df is None or geo_df is None or pd.isna(check_time):
+        return "Unknown"
+
+    required_track_cols = {"Time", "Latitude", "Longitude"}
+    required_geo_cols = {"Name", "Latitude", "Longitude"}
+
+    if not required_track_cols.issubset(track_df.columns):
+        return "Unknown"
+
+    if not required_geo_cols.issubset(geo_df.columns):
+        return "Unknown"
+
+    start_time = check_time - timedelta(minutes=window_minutes)
+    end_time = check_time
+
+    window_pings = track_df[
+        (track_df["Time"] >= start_time) &
+        (track_df["Time"] <= end_time)
+    ].copy()
+
+    if window_pings.empty:
+        return "Unknown"
+
+    window_pings = window_pings.dropna(subset=["Latitude", "Longitude", "Time"])
+    if window_pings.empty:
+        return "Unknown"
+
+    window_pings = window_pings.sort_values("Time")
+
+    for _, ping in window_pings.iterrows():
+        v_lat = ping["Latitude"]
+        v_lon = ping["Longitude"]
+
+        for _, loc in geo_df.iterrows():
+            if pd.isna(loc["Latitude"]) or pd.isna(loc["Longitude"]):
+                continue
+
+            radius = (
+                loc["Radius_Meters"]
+                if "Radius_Meters" in geo_df.columns and pd.notna(loc.get("Radius_Meters"))
+                else 150
+            )
+
+            distance = haversine(v_lat, v_lon, loc["Latitude"], loc["Longitude"])
+            if distance <= radius:
+                return f"✅ {loc['Name']}"
+
+    return "❌ Outside Zone"
+
+
 # =========================================================
 # SESSION STATE
 # =========================================================
@@ -553,7 +608,7 @@ with st.sidebar:
         <div class="sidebar-panel">
             <div class="sidebar-title">Control Panel</div>
             <div class="sidebar-subtitle">
-                Upload source files, tracker files, and geofence locations with a cleaner professional workflow.
+                Upload VTCS files, tracker files, and geofence locations with a cleaner professional workflow.
             </div>
         </div>
         """,
@@ -626,83 +681,64 @@ def process_audit(vtcs_df, tracking_files_map=None):
         lambda x: "🚨 Suspicious (>30m)" if pd.notna(x) and x > 30 else "✅ Normal"
     )
 
-    if tracking_files_map:
-        gps_audit, zone_check, matched_files = [], [], []
+    gps_audit, zone_check, matched_files = [], [], []
 
-        for _, row in vtcs_df.iterrows():
-            vehicle_name = row.get("Vehicle", "")
-            track_df = find_matching_tracking_df(vehicle_name, tracking_files_map)
-            matched_files.append(vehicle_name if track_df is not None else "No file matched")
+    for _, row in vtcs_df.iterrows():
+        vehicle_name = row.get("Vehicle", "")
+        track_df = find_matching_tracking_df(vehicle_name, tracking_files_map) if tracking_files_map else None
+        matched_files.append(vehicle_name if track_df is not None else "No file matched")
 
-            t_time = row["Time In"]
+        t_time = row["Time In"]
 
-            if track_df is None:
-                gps_audit.append("❓ No Tracking File")
-                zone_check.append("Unknown")
-                continue
+        if track_df is None:
+            gps_audit.append("❓ No Tracking File")
+            zone_check.append("Unknown")
+            continue
 
-            if pd.isnull(t_time):
-                gps_audit.append("❓ Invalid")
-                zone_check.append("N/A")
-                continue
+        if pd.isnull(t_time):
+            gps_audit.append("❓ Invalid")
+            zone_check.append("N/A")
+            continue
 
-            if "Time" not in track_df.columns:
-                gps_audit.append("❓ Invalid Tracking File")
-                zone_check.append("Unknown")
-                continue
+        if "Time" not in track_df.columns:
+            gps_audit.append("❓ Invalid Tracking File")
+            zone_check.append("Unknown")
+            continue
 
-            mask = (track_df["Time"] >= t_time - timedelta(minutes=2)) & (
-                track_df["Time"] <= t_time + timedelta(minutes=2)
-            )
-            pings = track_df[mask]
+        # GPS_Audit logic remains around Time In only
+        gps_mask = (track_df["Time"] >= t_time - timedelta(minutes=2)) & (
+            track_df["Time"] <= t_time + timedelta(minutes=2)
+        )
+        gps_pings = track_df[gps_mask]
 
-            if pings.empty:
-                gps_audit.append("❓ No Data")
-                zone_check.append("Unknown")
+        if gps_pings.empty:
+            gps_audit.append("❓ No Data")
+        else:
+            if "Status" in gps_pings.columns:
+                stts = gps_pings["Status"].astype(str).str.lower().values
+                valid_idle = any(
+                    keyword in s for s in stts for keyword in ["idle", "parked", "stopped"]
+                )
+                gps_audit.append("✅ Verified" if valid_idle else "❌ Moving")
             else:
-                if "Status" in pings.columns:
-                    stts = pings["Status"].astype(str).str.lower().values
-                    valid_idle = any(
-                        keyword in s for s in stts for keyword in ["idle", "parked", "stopped"]
-                    )
-                    gps_audit.append("✅ Verified" if valid_idle else "❌ Moving")
-                else:
-                    gps_audit.append("❓ Status Missing")
+                gps_audit.append("❓ Status Missing")
 
-                z_found = "❌ Outside Zone"
+        # Zone_Check only from Geofence Config and only from 1 hour before Time In
+        if st.session_state.geo_data is not None:
+            z_found = find_zone_in_precheck_window(
+                track_df=track_df,
+                check_time=t_time,
+                geo_df=st.session_state.geo_data,
+                window_minutes=60
+            )
+        else:
+            z_found = "Unknown"
 
-                if (
-                    st.session_state.geo_data is not None
-                    and "Latitude" in pings.columns
-                    and "Longitude" in pings.columns
-                ):
-                    valid_ping = pings.dropna(subset=["Latitude", "Longitude"])
-                    if not valid_ping.empty and {"Name", "Latitude", "Longitude"}.issubset(
-                        st.session_state.geo_data.columns
-                    ):
-                        v_lat = valid_ping.iloc[0]["Latitude"]
-                        v_lon = valid_ping.iloc[0]["Longitude"]
+        zone_check.append(z_found)
 
-                        for _, loc in st.session_state.geo_data.iterrows():
-                            if pd.isna(loc["Latitude"]) or pd.isna(loc["Longitude"]):
-                                continue
-
-                            radius = (
-                                loc["Radius_Meters"]
-                                if "Radius_Meters" in st.session_state.geo_data.columns
-                                and pd.notna(loc.get("Radius_Meters"))
-                                else 150
-                            )
-
-                            if haversine(v_lat, v_lon, loc["Latitude"], loc["Longitude"]) <= radius:
-                                z_found = f"✅ {loc['Name']}"
-                                break
-
-                zone_check.append(z_found)
-
-        vtcs_df["Tracking_File_Match"] = matched_files
-        vtcs_df["GPS_Audit"] = gps_audit
-        vtcs_df["Zone_Check"] = zone_check
+    vtcs_df["Tracking_File_Match"] = matched_files
+    vtcs_df["GPS_Audit"] = gps_audit
+    vtcs_df["Zone_Check"] = zone_check
 
     return vtcs_df
 

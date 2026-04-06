@@ -28,8 +28,9 @@ st.markdown(
         --bg-soft: #eef4fb;
         --panel: #ffffff;
         --panel-soft: #f8fbff;
-        --sidebar-dark: #0f1f46;
-        --sidebar-dark-2: #13295c;
+        --sidebar-dark: #112654;
+        --sidebar-dark-2: #1d4ed8;
+        --sidebar-dark-3: #2563eb;
         --text: #15233b;
         --muted: #6e7f99;
         --line: #dde6f2;
@@ -67,8 +68,11 @@ st.markdown(
     }
 
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, var(--sidebar-dark) 0%, var(--sidebar-dark-2) 100%);
-        border-right: 1px solid rgba(255,255,255,0.08);
+        background:
+            radial-gradient(circle at 85% 20%, rgba(255,255,255,0.16), transparent 24%),
+            radial-gradient(circle at 15% 20%, rgba(147,197,253,0.18), transparent 18%),
+            linear-gradient(180deg, var(--sidebar-dark) 0%, var(--sidebar-dark-2) 55%, var(--sidebar-dark-3) 100%);
+        border-right: 1px solid rgba(255,255,255,0.10);
     }
 
     section[data-testid="stSidebar"] .stMarkdown,
@@ -295,12 +299,13 @@ st.markdown(
     }
 
     .sidebar-panel {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.14);
         border-radius: 20px;
         padding: 14px 14px 10px 14px;
         margin-bottom: 14px;
-        backdrop-filter: blur(6px);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 12px 24px rgba(10, 24, 63, 0.18);
     }
 
     .sidebar-title {
@@ -312,8 +317,9 @@ st.markdown(
 
     .sidebar-subtitle {
         font-size: 0.87rem;
-        color: #d4e1ff !important;
+        color: #dbeafe !important;
         margin-bottom: 6px;
+        line-height: 1.45;
     }
 
     .stTabs [data-baseweb="tab-list"] {
@@ -537,10 +543,6 @@ def vehicle_type_color(vehicle_name):
 
 
 def find_zone_in_precheck_window(track_df, check_time, geo_df, window_minutes=60):
-    """
-    Check tracker coordinates from 1 hour before VTCS Time In up to Time In.
-    If any coordinate falls within any TCP/WE radius, return that zone name.
-    """
     if track_df is None or geo_df is None or pd.isna(check_time):
         return "Unknown"
 
@@ -589,6 +591,30 @@ def find_zone_in_precheck_window(track_df, check_time, geo_df, window_minutes=60
                 return f"✅ {loc['Name']}"
 
     return "❌ Outside Zone"
+
+
+def build_column_config(df, min_px=90, max_px=280):
+    column_config = {}
+
+    for col in df.columns:
+        try:
+            max_len_data = df[col].astype(str).map(len).max()
+        except Exception:
+            max_len_data = len(str(col))
+
+        max_len = max(len(str(col)), int(max_len_data) if pd.notna(max_len_data) else len(str(col)))
+        width_px = max(min_px, min(max_px, max_len * 9))
+
+        if width_px <= 110:
+            width_label = "small"
+        elif width_px <= 180:
+            width_label = "medium"
+        else:
+            width_label = "large"
+
+        column_config[col] = st.column_config.TextColumn(label=col, width=width_label)
+
+    return column_config
 
 
 # =========================================================
@@ -705,7 +731,6 @@ def process_audit(vtcs_df, tracking_files_map=None):
             zone_check.append("Unknown")
             continue
 
-        # GPS_Audit logic remains around Time In only
         gps_mask = (track_df["Time"] >= t_time - timedelta(minutes=2)) & (
             track_df["Time"] <= t_time + timedelta(minutes=2)
         )
@@ -723,7 +748,6 @@ def process_audit(vtcs_df, tracking_files_map=None):
             else:
                 gps_audit.append("❓ Status Missing")
 
-        # Zone_Check only from Geofence Config and only from 1 hour before Time In
         if st.session_state.geo_data is not None:
             z_found = find_zone_in_precheck_window(
                 track_df=track_df,
@@ -911,12 +935,16 @@ if vtcs_file:
             }
         )
 
+        summary_df = summ.reset_index().copy()
+
         st.dataframe(
-            summ.style
+            summary_df.style
             .background_gradient(cmap="Blues", subset=["Total Tons"])
             .format({"Total Tons": "{:.2f}", "Avg Mins": "{:.1f}"}),
             use_container_width=True,
             height=430,
+            hide_index=True,
+            column_config=build_column_config(summary_df)
         )
 
     with t2:
@@ -939,7 +967,15 @@ if vtcs_file:
         if "Zone_Check" in results.columns:
             cols.append("Zone_Check")
 
-        st.dataframe(results[cols], use_container_width=True, height=520)
+        audit_df = results[cols].copy()
+
+        st.dataframe(
+            audit_df,
+            use_container_width=True,
+            height=520,
+            hide_index=True,
+            column_config=build_column_config(audit_df)
+        )
 
 else:
     st.markdown(

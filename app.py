@@ -86,30 +86,6 @@ st.markdown(
         color: #f8fbff !important;
     }
 
-    .sidebar-panel {
-        background: rgba(255,255,255,0.10);
-        border: 1px solid rgba(255,255,255,0.14);
-        border-radius: 20px;
-        padding: 14px 14px 10px 14px;
-        margin-bottom: 14px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 12px 24px rgba(10, 24, 63, 0.18);
-    }
-
-    .sidebar-title {
-        font-size: 1rem;
-        font-weight: 900;
-        color: #ffffff !important;
-        margin-bottom: 6px;
-    }
-
-    .sidebar-subtitle {
-        font-size: 0.87rem;
-        color: #dbeafe !important;
-        margin-bottom: 6px;
-        line-height: 1.45;
-    }
-
     .hero {
         position: relative;
         overflow: hidden;
@@ -322,6 +298,30 @@ st.markdown(
         box-shadow: 0 14px 26px rgba(34, 197, 94, 0.24) !important;
     }
 
+    .sidebar-panel {
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 20px;
+        padding: 14px 14px 10px 14px;
+        margin-bottom: 14px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 12px 24px rgba(10, 24, 63, 0.18);
+    }
+
+    .sidebar-title {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #ffffff !important;
+        margin-bottom: 6px;
+    }
+
+    .sidebar-subtitle {
+        font-size: 0.87rem;
+        color: #dbeafe !important;
+        margin-bottom: 6px;
+        line-height: 1.45;
+    }
+
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background: #f8fbff;
@@ -426,14 +426,6 @@ def load_data_file(uploaded_file):
     if uploaded_file.name.lower().endswith("xlsx"):
         return pd.read_excel(uploaded_file)
     return pd.read_csv(uploaded_file)
-
-
-def load_monthly_report(uploaded_file):
-    if uploaded_file is None:
-        return None
-    df = pd.read_excel(uploaded_file) if uploaded_file.name.lower().endswith("xlsx") else pd.read_csv(uploaded_file)
-    df.columns = [str(c).strip() for c in df.columns]
-    return df
 
 
 def prepare_tracking_df(track_df):
@@ -642,7 +634,7 @@ with st.sidebar:
         <div class="sidebar-panel">
             <div class="sidebar-title">Control Panel</div>
             <div class="sidebar-subtitle">
-                Upload VTCS files, tracker files, monthly report, and geofence locations with a cleaner professional workflow.
+                Upload VTCS files, tracker files, and geofence locations with a cleaner professional workflow.
             </div>
         </div>
         """,
@@ -656,12 +648,6 @@ with st.sidebar:
         type=["xlsx", "csv"],
         accept_multiple_files=True,
         help="Upload separate tracker file for each vehicle. File name should match vehicle name."
-    )
-
-    monthly_report_file = st.file_uploader(
-        "3. Monthly Report",
-        type=["xlsx", "csv"],
-        help="Upload monthly report to enable Monthly Insights tab."
     )
 
     st.markdown(
@@ -801,8 +787,6 @@ if vtcs_file:
             except Exception as e:
                 st.warning(f"Could not read tracking file: {uploaded_file.name} | {e}")
 
-    monthly_df = load_monthly_report(monthly_report_file) if monthly_report_file else None
-
     results = process_audit(df_vtcs, tracking_files_map if tracking_files_map else None)
 
     delayed_count = len(results[results["Time_Status"].str.contains("🚨", na=False)])
@@ -928,11 +912,7 @@ if vtcs_file:
         )
         st.plotly_chart(trips_fig, use_container_width=True)
 
-    if monthly_df is not None:
-        t1, t2, t3 = st.tabs(["📋 Executive Summary", "📅 Monthly Insights", "🔍 Technical Audit Log"])
-    else:
-        t1, t2 = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
-        t3 = None
+    t1, t2 = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
 
     with t1:
         st.markdown(
@@ -966,43 +946,6 @@ if vtcs_file:
             hide_index=True,
             column_config=build_column_config(summary_df)
         )
-
-    if t3 is not None:
-        with t3:
-            st.markdown(
-                """
-                <div class="soft-card">
-                    <p class="soft-card-title">Monthly Insights</p>
-                    <p class="soft-card-subtitle">Tehsil-level monthly report view from the uploaded monthly report.</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            if monthly_df is not None and not monthly_df.empty:
-                possible_tehsil_cols = ["Tehsil", "TEHSIL", "tehsil"]
-                tehsil_col = next((c for c in possible_tehsil_cols if c in monthly_df.columns), None)
-
-                if tehsil_col:
-                    tehsil_options = sorted(monthly_df[tehsil_col].dropna().astype(str).unique())
-                    selected_tehsil = st.selectbox("Select Tehsil", tehsil_options)
-
-                    filtered_monthly_df = monthly_df[
-                        monthly_df[tehsil_col].astype(str) == selected_tehsil
-                    ].copy()
-                else:
-                    st.warning("No Tehsil column found in monthly report. Showing full monthly report.")
-                    filtered_monthly_df = monthly_df.copy()
-
-                st.dataframe(
-                    filtered_monthly_df,
-                    use_container_width=True,
-                    height=520,
-                    hide_index=True,
-                    column_config=build_column_config(filtered_monthly_df)
-                )
-            else:
-                st.info("Upload a monthly report to view monthly insights.")
 
     with t2:
         st.markdown(
@@ -1040,7 +983,7 @@ else:
         <div class="soft-card">
             <p class="soft-card-title">Ready to begin</p>
             <p class="soft-card-subtitle">
-                Upload VTCS data, tracker files, monthly report, and geofence locations from the control panel to generate the audit dashboard.
+                Upload VTCS data, tracker files, and geofence locations from the control panel to generate the audit dashboard.
             </p>
         </div>
         """,

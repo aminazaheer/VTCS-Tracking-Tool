@@ -21,7 +21,13 @@ st.set_page_config(
 # =========================================================
 # BRANDING
 # =========================================================
-LOGO_PATH = Path("/mnt/data/WhatsApp Image 2025-08-04 at 12.11.30 PM.jpeg")
+# Try multiple possible paths for logo (fix visibility issue)
+LOGO_CANDIDATES = [
+    Path("/mnt/data/WhatsApp Image 2025-08-04 at 12.11.30 PM.jpeg"),
+    Path("/mnt/data/image(7).png"),
+]
+
+LOGO_PATH = next((p for p in LOGO_CANDIDATES if p.exists()), None)
 
 
 def get_base64_image(path: Path):
@@ -33,7 +39,7 @@ def get_base64_image(path: Path):
     return None
 
 
-LOGO_BASE64 = get_base64_image(LOGO_PATH)
+LOGO_BASE64 = get_base64_image(LOGO_PATH) if LOGO_PATH else None
 
 # =========================================================
 # UI STYLE
@@ -212,11 +218,12 @@ st.markdown(
         flex-wrap: wrap;
     }}
 
-    .section-title {{
-        font-size: 1.15rem;
+    .section-title {
+        font-size: 1.28rem;
         font-weight: 900;
         margin: 0;
         color: var(--text) !important;
+        letter-spacing: -0.01em;
     }}
 
     .section-subtitle {{
@@ -260,12 +267,30 @@ st.markdown(
         margin-top: 6px;
     }}
 
-    .kpi-card {{
-        background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
-        border: 1px solid #d7e5d8;
+    .kpi-card {
         border-radius: 20px;
         padding: 16px;
         box-shadow: 0 12px 28px rgba(16, 40, 22, 0.06);
+    }
+
+    .kpi-card:nth-child(1) {
+        background: linear-gradient(180deg, #eef6ff 0%, #e3f0ff 100%);
+        border: 1px solid #cfe1ff;
+    }
+
+    .kpi-card:nth-child(2) {
+        background: linear-gradient(180deg, #eefcf2 0%, #e4f8ea 100%);
+        border: 1px solid #cdeed8;
+    }
+
+    .kpi-card:nth-child(3) {
+        background: linear-gradient(180deg, #fff7eb 0%, #ffefd8 100%);
+        border: 1px solid #ffe0b8;
+    }
+
+    .kpi-card:nth-child(4) {
+        background: linear-gradient(180deg, #f2f7fb 0%, #eaf1f8 100%);
+        border: 1px solid #dbe6f0;
     }}
 
     .kpi-label {{
@@ -394,18 +419,21 @@ st.markdown(
         border-radius: 18px;
     }}
 
-    .stTabs [data-baseweb="tab"] {{
-        height: 50px;
+    .stTabs [data-baseweb="tab"] {
+        height: 54px;
         border-radius: 14px;
-        color: #456055;
-        font-weight: 850;
+        color: #355345;
+        font-weight: 900;
+        font-size: 1.04rem;
         background: transparent;
+        padding: 0 18px;
     }}
 
-    .stTabs [aria-selected="true"] {{
+    .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, #eef7ef, #f7fbf7) !important;
         border: 1px solid #cfe0d1 !important;
         color: #1e5b33 !important;
+        box-shadow: 0 8px 18px rgba(47, 125, 70, 0.10);
     }}
 
     div[data-testid="stDataFrame"] {{
@@ -659,7 +687,8 @@ def has_t_in_name(vehicle_name):
 
 
 def vehicle_type_color(vehicle_name):
-    return "#2f7d46" if has_t_in_name(vehicle_name) else "#c89b2f"
+    # Restore original logic: vehicles containing 'T' (TT) are GREEN, others BLUE
+    return "#22c55e" if has_t_in_name(vehicle_name) else "#3b82f6"
 
 
 def find_zone_in_precheck_window(track_df, check_time, geo_df, window_minutes=60):
@@ -895,7 +924,7 @@ def render_kpi_grid(metrics, prefix=""):
     )
 
 
-def render_overview_cards(daily_metrics=None, monthly_metrics=None):
+def render_overview_cards(daily_metrics=None, monthly_metrics=None, daily_office_label="—", monthly_office_label="—"):
     def safe_value(value, suffix=""):
         if value is None:
             return "—"
@@ -908,11 +937,13 @@ def render_overview_cards(daily_metrics=None, monthly_metrics=None):
                 <div class="kpi-label">Daily Trips</div>
                 <div class="kpi-value">{safe_value(daily_metrics['trip_count'] if daily_metrics else None)}</div>
                 <div class="kpi-note">Current uploaded daily VTCS workload</div>
+                <div class="kpi-note"><b>Tehsil:</b> {daily_office_label}</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Monthly Trips</div>
                 <div class="kpi-value">{safe_value(monthly_metrics['trip_count'] if monthly_metrics else None)}</div>
                 <div class="kpi-note">Separate monthly insights workload</div>
+                <div class="kpi-note"><b>Tehsil:</b> {monthly_office_label}</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Daily Tonnage</div>
@@ -928,6 +959,27 @@ def render_overview_cards(daily_metrics=None, monthly_metrics=None):
         """,
         unsafe_allow_html=True,
     )
+
+
+def detect_office_label(df):
+    if df is None or "Office" not in df.columns:
+        return "—"
+
+    office_vals = (
+        df["Office"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+    office_vals = office_vals[office_vals != ""]
+
+    if office_vals.empty:
+        return "—"
+
+    unique_vals = office_vals.unique().tolist()
+    if len(unique_vals) == 1:
+        return unique_vals[0]
+    return ", ".join(unique_vals[:3]) + (" ..." if len(unique_vals) > 3 else "")
 
 
 def render_module(module_title, module_subtitle, results, metrics):
@@ -959,7 +1011,7 @@ def render_module(module_title, module_subtitle, results, metrics):
                 x=v_stats["Vehicle"],
                 y=v_stats["Tons"],
                 marker=dict(
-                    color="#2f7d46",
+                    color="#3b82f6",
                     line=dict(color="#ffffff", width=1.5)
                 ),
                 text=[f"{x:.2f}" for x in v_stats["Tons"]],
@@ -1033,6 +1085,18 @@ def render_module(module_title, module_subtitle, results, metrics):
         st.plotly_chart(trips_fig, use_container_width=True)
 
     tabs = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
+
+    st.markdown(
+        """
+        <style>
+        button[role="tab"] p {
+            font-size: 1.02rem !important;
+            font-weight: 900 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
     with tabs[0]:
         summ = results.groupby("Vehicle").agg(
@@ -1165,14 +1229,18 @@ month_results = None
 
 daily_metrics = None
 monthly_metrics = None
+daily_office_label = "—"
+monthly_office_label = "—"
 
 if vtcs_file:
     df_vtcs = pd.read_excel(vtcs_file) if vtcs_file.name.lower().endswith("xlsx") else pd.read_csv(vtcs_file)
+    daily_office_label = detect_office_label(df_vtcs)
     daily_results = process_audit(df_vtcs, tracking_files_map if tracking_files_map else None, st.session_state.geo_data)
     daily_metrics = calculate_module_metrics(daily_results, tracking_files_map, st.session_state.geo_data)
 
 if monthly_vtcs_file:
     df_month = pd.read_excel(monthly_vtcs_file) if monthly_vtcs_file.name.lower().endswith("xlsx") else pd.read_csv(monthly_vtcs_file)
+    monthly_office_label = detect_office_label(df_month)
     month_results = process_audit(df_month, tracking_files_map if tracking_files_map else None, st.session_state.geo_data)
     monthly_metrics = calculate_module_metrics(month_results, tracking_files_map, st.session_state.geo_data)
 
@@ -1213,7 +1281,7 @@ with col_right:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-render_overview_cards(daily_metrics, monthly_metrics)
+render_overview_cards(daily_metrics, monthly_metrics, daily_office_label, monthly_office_label)
 
 # =========================================================
 # MODULES
@@ -1224,8 +1292,8 @@ with main_tabs[0]:
     if daily_results is not None:
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         render_module(
-            module_title="Daily VTCS Audit",
-            module_subtitle="Operational daily review using tracker validation, delay checks, and geofence logic.",
+            module_title="Daily VTCS Module",
+            module_subtitle=f"Operational daily review using tracker validation, delay checks, and geofence logic. Tehsil: {daily_office_label}",
             results=daily_results,
             metrics=daily_metrics,
         )
@@ -1234,7 +1302,7 @@ with main_tabs[0]:
         st.markdown(
             """
             <div class="section-card">
-                <div class="section-title">Daily VTCS Audit</div>
+                <div class="section-title">Daily VTCS Module</div>
                 <div class="section-subtitle">Upload daily VTCS data from the control panel to generate this module.</div>
             </div>
             """,
@@ -1246,8 +1314,8 @@ with main_tabs[1]:
     if month_results is not None:
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         render_module(
-            module_title="Monthly Insights of VTCS",
-            module_subtitle="Separate monthly module using the same logic and functionality as daily VTCS processing.",
+            module_title="Monthly Insights Module",
+            module_subtitle=f"Separate monthly module using the same logic and functionality as daily VTCS processing. Tehsil: {monthly_office_label}",
             results=month_results,
             metrics=monthly_metrics,
         )
@@ -1256,7 +1324,7 @@ with main_tabs[1]:
         st.markdown(
             """
             <div class="section-card">
-                <div class="section-title">Monthly Insights of VTCS</div>
+                <div class="section-title">Monthly Insights Module</div>
                 <div class="section-subtitle">Upload monthly VTCS data to run a separate monthly insights workflow with the same audit logic as daily processing.</div>
             </div>
             """,

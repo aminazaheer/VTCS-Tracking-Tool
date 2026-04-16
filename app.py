@@ -6,74 +6,91 @@ import plotly.graph_objects as go
 from math import radians, cos, sin, asin, sqrt
 from pathlib import Path
 import re
+import base64
 
 # =========================================================
 # PAGE CONFIG
 # =========================================================
 st.set_page_config(
-    page_title="VTCS Auditor Pro",
-    page_icon="🚛",
+    page_title="Sargodha Suthra Punjab Tracking Tool",
+    page_icon="♻️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # =========================================================
+# BRANDING
+# =========================================================
+LOGO_PATH = Path("/mnt/data/WhatsApp Image 2025-08-04 at 12.11.30 PM.jpeg")
+
+
+def get_base64_image(path: Path):
+    try:
+        if path.exists():
+            return base64.b64encode(path.read_bytes()).decode()
+    except Exception:
+        return None
+    return None
+
+
+LOGO_BASE64 = get_base64_image(LOGO_PATH)
+
+# =========================================================
 # UI STYLE
 # =========================================================
 st.markdown(
-    """
+    f"""
     <style>
-    :root {
-        --bg-main: #f5f8fc;
-        --bg-soft: #eef4fb;
+    :root {{
+        --bg-main: #f4f7f2;
+        --bg-soft: #edf5ed;
         --panel: #ffffff;
-        --panel-soft: #f8fbff;
-        --sidebar-dark: #112654;
-        --sidebar-dark-2: #1d4ed8;
-        --sidebar-dark-3: #2563eb;
-        --text: #15233b;
-        --muted: #6e7f99;
-        --line: #dde6f2;
+        --panel-soft: #f7fbf6;
+        --panel-accent: #f1f8f0;
+        --sidebar-dark: #0f2617;
+        --sidebar-dark-2: #1d5c33;
+        --sidebar-dark-3: #2f7d46;
+        --text: #163122;
+        --muted: #5e7368;
+        --line: #d7e5d8;
+        --brand-green: #2f7d46;
+        --brand-green-dark: #1f5d33;
+        --brand-green-soft: #eaf5eb;
+        --brand-black: #111111;
+        --brand-gold: #c89b2f;
+        --success: #208a43;
+        --warning: #c97a11;
+        --danger: #bf2f2f;
+        --shadow: 0 14px 34px rgba(19, 53, 30, 0.08);
+        --shadow-strong: 0 20px 48px rgba(17, 32, 20, 0.14);
+    }}
 
-        --blue: #3b82f6;
-        --blue-soft: #eaf3ff;
-
-        --green: #22c55e;
-        --green-soft: #eaf9f0;
-
-        --orange: #f59e0b;
-        --orange-soft: #fff4e4;
-
-        --shadow: 0 14px 34px rgba(19, 41, 92, 0.10);
-        --shadow-strong: 0 18px 40px rgba(19, 41, 92, 0.16);
-    }
-
-    .stApp {
+    .stApp {{
         background:
-            radial-gradient(circle at top left, rgba(59,130,246,0.08), transparent 24%),
-            radial-gradient(circle at top right, rgba(34,197,94,0.07), transparent 22%),
-            linear-gradient(180deg, #f9fbfe 0%, #f4f7fb 45%, #edf3fa 100%);
+            radial-gradient(circle at top left, rgba(47,125,70,0.08), transparent 26%),
+            radial-gradient(circle at top right, rgba(200,155,47,0.07), transparent 18%),
+            linear-gradient(180deg, #fbfcfa 0%, #f4f8f2 50%, #eef4ee 100%);
         color: var(--text);
-    }
+    }}
 
-    .block-container {
-        max-width: 1520px;
-        padding-top: 1.05rem;
+    .block-container {{
+        max-width: 1540px;
+        padding-top: 1.1rem;
         padding-bottom: 2rem;
-    }
+    }}
 
     .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5,
-    .stApp p, .stApp label, .stApp div, .stMarkdown {
+    .stApp p, .stApp label, .stApp div, .stMarkdown {{
         color: var(--text);
-    }
+    }}
 
-    section[data-testid="stSidebar"] {
+    section[data-testid="stSidebar"] {{
         background:
-            radial-gradient(circle at 85% 20%, rgba(255,255,255,0.16), transparent 24%),
-            radial-gradient(circle at 15% 20%, rgba(147,197,253,0.18), transparent 18%),
-            linear-gradient(180deg, var(--sidebar-dark) 0%, var(--sidebar-dark-2) 55%, var(--sidebar-dark-3) 100%);
+            radial-gradient(circle at 85% 20%, rgba(255,255,255,0.12), transparent 22%),
+            radial-gradient(circle at 15% 20%, rgba(200,155,47,0.10), transparent 18%),
+            linear-gradient(180deg, var(--sidebar-dark) 0%, var(--sidebar-dark-2) 52%, var(--sidebar-dark-3) 100%);
         border-right: 1px solid rgba(255,255,255,0.10);
-    }
+    }}
 
     section[data-testid="stSidebar"] .stMarkdown,
     section[data-testid="stSidebar"] h1,
@@ -82,292 +99,354 @@ st.markdown(
     section[data-testid="stSidebar"] label,
     section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] div,
-    section[data-testid="stSidebar"] span {
-        color: #f8fbff !important;
-    }
+    section[data-testid="stSidebar"] span {{
+        color: #f8fff8 !important;
+    }}
 
-    .hero {
+    .hero {{
         position: relative;
         overflow: hidden;
         background:
-            radial-gradient(circle at 85% 20%, rgba(255,255,255,0.16), transparent 24%),
-            radial-gradient(circle at 15% 20%, rgba(147,197,253,0.20), transparent 18%),
-            linear-gradient(135deg, #112654 0%, #1d4ed8 52%, #2563eb 100%);
-        border-radius: 28px;
-        padding: 30px 34px;
-        border: 1px solid rgba(255,255,255,0.10);
-        box-shadow: 0 20px 44px rgba(17, 38, 84, 0.22);
+            radial-gradient(circle at 92% 18%, rgba(255,255,255,0.12), transparent 20%),
+            radial-gradient(circle at 12% 14%, rgba(200,155,47,0.12), transparent 14%),
+            linear-gradient(135deg, #102816 0%, #1f5d33 54%, #2f7d46 100%);
+        border-radius: 30px;
+        padding: 26px 30px;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 22px 50px rgba(16, 40, 22, 0.20);
         margin-bottom: 18px;
-    }
+    }}
 
-    .hero-badge {
+    .hero-grid {{
+        display: grid;
+        grid-template-columns: 112px 1fr;
+        gap: 20px;
+        align-items: center;
+    }}
+
+    .hero-logo {{
+        width: 104px;
+        height: 104px;
+        border-radius: 24px;
+        background: rgba(255,255,255,0.94);
+        border: 1px solid rgba(255,255,255,0.28);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 14px 28px rgba(0,0,0,0.14);
+        padding: 8px;
+    }}
+
+    .hero-logo img {{
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 18px;
+    }}
+
+    .hero-badge {{
         display: inline-flex;
         align-items: center;
         gap: 8px;
         padding: 7px 14px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.14);
-        border: 1px solid rgba(255,255,255,0.18);
-        color: #eaf2ff !important;
-        font-size: 0.83rem;
-        font-weight: 700;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.16);
+        color: #ebf8ef !important;
+        font-size: 0.82rem;
+        font-weight: 800;
         margin-bottom: 14px;
-    }
+    }}
 
-    .hero-title {
-        font-size: 2.8rem;
-        line-height: 1.05;
+    .hero-title {{
+        font-size: 2.35rem;
+        line-height: 1.04;
         margin: 0;
-        font-weight: 850;
+        font-weight: 900;
         color: #ffffff !important;
         letter-spacing: -0.02em;
-    }
+    }}
 
-    .hero-subtitle {
+    .hero-subtitle {{
         margin-top: 12px;
-        color: #e3edff !important;
-        font-size: 1.02rem;
-        max-width: 880px;
-    }
+        color: #e4f1e7 !important;
+        font-size: 1.01rem;
+        max-width: 960px;
+    }}
 
-    .insight-row {
+    .hero-meta {{
+        margin-top: 16px;
         display: flex;
-        gap: 12px;
         flex-wrap: wrap;
-        margin-bottom: 18px;
-    }
+        gap: 10px;
+    }}
 
-    .insight-pill {
+    .hero-chip {{
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 11px 16px;
+        padding: 10px 14px;
         border-radius: 999px;
-        font-weight: 800;
-        font-size: 0.88rem;
-        border: 1px solid transparent;
-        box-shadow: 0 8px 18px rgba(21, 35, 59, 0.06);
-    }
-
-    .pill-blue {
-        background: #eaf3ff;
-        color: #1d4ed8 !important;
-        border-color: #cfe1ff;
-    }
-
-    .pill-green {
-        background: #ebfbf1;
-        color: #15803d !important;
-        border-color: #cfeedd;
-    }
-
-    .pill-orange {
-        background: #fff4e4;
-        color: #c27007 !important;
-        border-color: #ffe0b2;
-    }
-
-    .kpi-shell {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-        border: 1px solid #dfe8f3;
-        border-radius: 22px;
-        padding: 10px;
-        box-shadow: 0 16px 34px rgba(17, 38, 84, 0.08);
-        margin-bottom: 16px;
-    }
-
-    div[data-testid="metric-container"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
-        border: 1px solid #dbe7f3;
-        border-radius: 20px;
-        padding: 22px 18px;
-        box-shadow: 0 12px 28px rgba(17, 38, 84, 0.06);
-    }
-
-    div[data-testid="metric-container"] label {
-        color: #63758d !important;
-        font-weight: 800 !important;
-        font-size: 0.95rem !important;
-    }
-
-    div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
-        color: #0d2a52 !important;
-        font-weight: 900 !important;
-        font-size: 2.25rem !important;
-        letter-spacing: -0.02em;
-    }
-
-    .mini-kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
-        margin: 6px 0 24px 0;
-    }
-
-    .mini-kpi-card {
-        border-radius: 18px;
-        padding: 16px;
-        box-shadow: 0 10px 24px rgba(17, 38, 84, 0.07);
-        border: 1px solid #deebf7;
-    }
-
-    .mini-kpi-blue {
-        background: linear-gradient(180deg, #eef6ff 0%, #e3f0ff 100%);
-        border: 1px solid #cfe1ff;
-    }
-
-    .mini-kpi-green {
-        background: linear-gradient(180deg, #eefcf2 0%, #e4f8ea 100%);
-        border: 1px solid #cdeed8;
-    }
-
-    .mini-kpi-orange {
-        background: linear-gradient(180deg, #fff7eb 0%, #ffefd8 100%);
-        border: 1px solid #ffe0b8;
-    }
-
-    .mini-kpi-slate {
-        background: linear-gradient(180deg, #f2f7fb 0%, #eaf1f8 100%);
-        border: 1px solid #dbe6f0;
-    }
-
-    .mini-kpi-label {
-        color: #6f8197 !important;
         font-size: 0.84rem;
         font-weight: 800;
-        margin-bottom: 8px;
-    }
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.14);
+        color: #f7fff9 !important;
+    }}
 
-    .mini-kpi-value {
-        color: #102447 !important;
-        font-size: 1.2rem;
-        font-weight: 900;
-    }
-
-    .soft-card {
-        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    .section-card {{
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
         border: 1px solid var(--line);
-        border-radius: 22px;
+        border-radius: 24px;
         padding: 18px 20px;
         box-shadow: var(--shadow);
         margin-bottom: 18px;
-    }
+    }}
 
-    .soft-card-title {
-        font-size: 1.05rem;
-        font-weight: 800;
-        margin: 0 0 4px 0;
-        color: var(--text) !important;
-    }
+    .section-header {{
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 16px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }}
 
-    .soft-card-subtitle {
+    .section-title {{
+        font-size: 1.15rem;
+        font-weight: 900;
         margin: 0;
+        color: var(--text) !important;
+    }}
+
+    .section-subtitle {{
+        margin: 4px 0 0 0;
         color: var(--muted) !important;
         font-size: 0.94rem;
-    }
+    }}
 
-    [data-testid="stFileUploader"] section {
+    .insight-grid {{
+        display: grid;
+        grid-template-columns: 1.45fr 1fr;
+        gap: 16px;
+        margin-bottom: 18px;
+    }}
+
+    .summary-banner {{
+        background: linear-gradient(135deg, #f7fbf7 0%, #edf6ee 100%);
+        border: 1px solid #d6e7d8;
+        border-radius: 22px;
+        padding: 18px 18px 12px 18px;
+        box-shadow: 0 12px 28px rgba(19, 53, 30, 0.06);
+    }}
+
+    .summary-title {{
+        font-size: 1.05rem;
+        font-weight: 900;
+        margin-bottom: 6px;
+        color: #173122 !important;
+    }}
+
+    .summary-body {{
+        color: #52685c !important;
+        font-size: 0.94rem;
+        line-height: 1.65;
+    }}
+
+    .kpi-grid {{
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 6px;
+    }}
+
+    .kpi-card {{
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
+        border: 1px solid #d7e5d8;
+        border-radius: 20px;
+        padding: 16px;
+        box-shadow: 0 12px 28px rgba(16, 40, 22, 0.06);
+    }}
+
+    .kpi-label {{
+        font-size: 0.84rem;
+        font-weight: 800;
+        color: #688073 !important;
+        margin-bottom: 8px;
+    }}
+
+    .kpi-value {{
+        font-size: 1.55rem;
+        font-weight: 900;
+        color: #143022 !important;
+    }}
+
+    .kpi-note {{
+        margin-top: 8px;
+        font-size: 0.78rem;
+        color: #6e8376 !important;
+    }}
+
+    .module-header {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+    }}
+
+    .module-badge {{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef7ef;
+        border: 1px solid #d6ead9;
+        color: #225b35 !important;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }}
+
+    div[data-testid="metric-container"] {{
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
+        border: 1px solid #d9e8db;
+        border-radius: 20px;
+        padding: 22px 18px;
+        box-shadow: 0 12px 28px rgba(16, 40, 22, 0.06);
+    }}
+
+    div[data-testid="metric-container"] label {{
+        color: #688073 !important;
+        font-weight: 800 !important;
+        font-size: 0.95rem !important;
+    }}
+
+    div[data-testid="metric-container"] div[data-testid="stMetricValue"] {{
+        color: #113021 !important;
+        font-weight: 900 !important;
+        font-size: 2.15rem !important;
+        letter-spacing: -0.02em;
+    }}
+
+    [data-testid="stFileUploader"] section {{
         background: rgba(255,255,255,0.98) !important;
         border-radius: 18px !important;
-        border: 2px dashed #c8d7ea !important;
-        padding: 9px !important;
+        border: 2px dashed #b7d1bc !important;
+        padding: 10px !important;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
-    }
+    }}
 
     [data-testid="stFileUploader"] section p,
     [data-testid="stFileUploader"] section span,
     [data-testid="stFileUploader"] small,
-    [data-testid="stFileUploader"] section div {
-        color: #173153 !important;
-    }
+    [data-testid="stFileUploader"] section div {{
+        color: #173122 !important;
+    }}
 
     .stButton > button,
-    [data-testid="stFileUploader"] button {
-        background: linear-gradient(135deg, #c7f4d3 0%, #8ee6a3 100%) !important;
-        color: #0d5a2a !important;
-        border: 2px solid #5dc57b !important;
+    [data-testid="stFileUploader"] button {{
+        background: linear-gradient(135deg, #e4f5e8 0%, #bfe4c7 100%) !important;
+        color: #19482a !important;
+        border: 1.5px solid #7bb28a !important;
         border-radius: 14px !important;
         font-weight: 850 !important;
         padding: 0.72rem 1rem !important;
-        box-shadow: 0 10px 22px rgba(34, 197, 94, 0.18) !important;
-    }
+        box-shadow: 0 10px 22px rgba(47, 125, 70, 0.14) !important;
+    }}
 
     .stButton > button:hover,
-    [data-testid="stFileUploader"] button:hover {
+    [data-testid="stFileUploader"] button:hover {{
         transform: translateY(-1px);
-        box-shadow: 0 14px 26px rgba(34, 197, 94, 0.24) !important;
-    }
+        box-shadow: 0 14px 26px rgba(47, 125, 70, 0.20) !important;
+    }}
 
-    .sidebar-panel {
+    .sidebar-panel {{
         background: rgba(255,255,255,0.10);
         border: 1px solid rgba(255,255,255,0.14);
         border-radius: 20px;
         padding: 14px 14px 10px 14px;
         margin-bottom: 14px;
         backdrop-filter: blur(8px);
-        box-shadow: 0 12px 24px rgba(10, 24, 63, 0.18);
-    }
+        box-shadow: 0 12px 24px rgba(10, 24, 12, 0.18);
+    }}
 
-    .sidebar-title {
+    .sidebar-title {{
         font-size: 1rem;
         font-weight: 900;
         color: #ffffff !important;
         margin-bottom: 6px;
-    }
+    }}
 
-    .sidebar-subtitle {
+    .sidebar-subtitle {{
         font-size: 0.87rem;
-        color: #dbeafe !important;
+        color: #e4f4e8 !important;
         margin-bottom: 6px;
         line-height: 1.45;
-    }
+    }}
 
-    .stTabs [data-baseweb="tab-list"] {
+    .stTabs [data-baseweb="tab-list"] {{
         gap: 10px;
-        background: #f8fbff;
-        border: 1px solid #dbe7f3;
+        background: #f7fbf7;
+        border: 1px solid #d7e5d8;
         padding: 8px;
         border-radius: 18px;
-    }
+    }}
 
-    .stTabs [data-baseweb="tab"] {
+    .stTabs [data-baseweb="tab"] {{
         height: 50px;
         border-radius: 14px;
-        color: #42556e;
+        color: #456055;
         font-weight: 850;
         background: transparent;
-    }
+    }}
 
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #e9f2ff, #f3f8ff) !important;
-        border: 1px solid #c7daf4 !important;
-        color: #1d4ed8 !important;
-    }
+    .stTabs [aria-selected="true"] {{
+        background: linear-gradient(135deg, #eef7ef, #f7fbf7) !important;
+        border: 1px solid #cfe0d1 !important;
+        color: #1e5b33 !important;
+    }}
 
-    div[data-testid="stDataFrame"] {
-        border: 1px solid #dfe8f3;
+    div[data-testid="stDataFrame"] {{
+        border: 1px solid #dbe7dd;
         border-radius: 18px;
         overflow: hidden;
         box-shadow: var(--shadow);
         background: #ffffff;
-    }
+    }}
 
-    .stAlert {
+    .stAlert {{
         border-radius: 16px !important;
-        border: 1px solid #d9e6f3 !important;
-    }
+        border: 1px solid #d7e5d8 !important;
+    }}
 
-    @media (max-width: 1100px) {
-        .mini-kpi-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 700px) {
-        .mini-kpi-grid {
+    @media (max-width: 1200px) {{
+        .insight-grid {{
             grid-template-columns: 1fr;
-        }
-    }
+        }}
+    }}
+
+    @media (max-width: 900px) {{
+        .hero-grid {{
+            grid-template-columns: 1fr;
+        }}
+
+        .hero-logo {{
+            width: 92px;
+            height: 92px;
+        }}
+
+        .kpi-grid {{
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }}
+    }}
+
+    @media (max-width: 700px) {{
+        .kpi-grid {{
+            grid-template-columns: 1fr;
+        }}
+    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -376,26 +455,32 @@ st.markdown(
 # =========================================================
 # HEADER
 # =========================================================
-st.markdown(
-    """
-    <div class="hero">
-        <div class="hero-badge">Fleet Audit • Geofencing • Tracker Validation</div>
-        <h1 class="hero-title">🚛 VTCS Auditor Pro</h1>
-        <p class="hero-subtitle">
-            Smart fleet audit dashboard with refined analytics, stronger geofence validation,
-            cleaner operator workflow, and a more professional visual interface.
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True,
+logo_html = (
+    f'<img src="data:image/jpeg;base64,{LOGO_BASE64}" alt="SGWMC Logo">'
+    if LOGO_BASE64 else '<div style="font-size:40px;">♻️</div>'
 )
 
 st.markdown(
-    """
-    <div class="insight-row">
-        <div class="insight-pill pill-blue">📊 Executive analytics</div>
-        <div class="insight-pill pill-green">📍 Geofence validation</div>
-        <div class="insight-pill pill-orange">⏱ Delay monitoring</div>
+    f"""
+    <div class="hero">
+        <div class="hero-grid">
+            <div class="hero-logo">{logo_html}</div>
+            <div>
+                <div class="hero-badge">SGWMC • VTCS Monitoring • Fleet Verification</div>
+                <h1 class="hero-title">Sargodha Suthra Punjab Tracking Tool</h1>
+                <p class="hero-subtitle">
+                    Unified operational control panel for VTCS daily review, monthly insights, GPS verification,
+                    geofence validation, delay monitoring, and management-ready reporting in a cleaner and more
+                    professional interface.
+                </p>
+                <div class="hero-meta">
+                    <div class="hero-chip">📊 Executive Summary</div>
+                    <div class="hero-chip">🗓️ Monthly Insights</div>
+                    <div class="hero-chip">📍 Geofence Validation</div>
+                    <div class="hero-chip">🚛 Tracker Matching</div>
+                </div>
+            </div>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -454,6 +539,41 @@ def prepare_tracking_df(track_df):
         track_df["Longitude"] = pd.to_numeric(track_df["Longitude"], errors="coerce")
 
     return track_df
+
+
+def prepare_vtcs_df(vtcs_df):
+    vtcs_df = vtcs_df.copy()
+    vtcs_df.columns = [str(c).strip() for c in vtcs_df.columns]
+
+    for col in ["Waste Collected (Kg)", "Before Weight", "After Weight (Kg)"]:
+        if col in vtcs_df.columns:
+            vtcs_df[col] = pd.to_numeric(
+                vtcs_df[col].astype(str).str.replace(",", "", regex=False), errors="coerce"
+            )
+
+    if "Waste Collected (Kg)" not in vtcs_df.columns:
+        vtcs_df["Waste Collected (Kg)"] = 0
+
+    if "Time In" in vtcs_df.columns:
+        vtcs_df["Time In"] = pd.to_datetime(vtcs_df["Time In"], errors="coerce")
+    else:
+        vtcs_df["Time In"] = pd.NaT
+
+    if "Time Out" in vtcs_df.columns:
+        vtcs_df["Time Out"] = pd.to_datetime(vtcs_df["Time Out"], errors="coerce")
+    else:
+        vtcs_df["Time Out"] = pd.NaT
+
+    vtcs_df["Tonnage"] = vtcs_df["Waste Collected (Kg)"].fillna(0) / 1000
+    vtcs_df["Duration_Mins"] = (
+        vtcs_df["Time Out"] - vtcs_df["Time In"]
+    ).dt.total_seconds() / 60
+
+    vtcs_df["Time_Status"] = vtcs_df["Duration_Mins"].apply(
+        lambda x: "🚨 Suspicious (>30m)" if pd.notna(x) and x > 30 else "✅ Normal"
+    )
+
+    return vtcs_df
 
 
 def find_matching_tracking_df(vehicle_name, tracking_files_map):
@@ -539,7 +659,7 @@ def has_t_in_name(vehicle_name):
 
 
 def vehicle_type_color(vehicle_name):
-    return "#22c55e" if has_t_in_name(vehicle_name) else "#3b82f6"
+    return "#2f7d46" if has_t_in_name(vehicle_name) else "#c89b2f"
 
 
 def find_zone_in_precheck_window(track_df, check_time, geo_df, window_minutes=60):
@@ -617,95 +737,22 @@ def build_column_config(df, min_px=90, max_px=280):
     return column_config
 
 
-# =========================================================
-# SESSION STATE
-# =========================================================
-if "geo_data" not in st.session_state:
-    st.session_state.geo_data = None
-
-# =========================================================
-# SIDEBAR
-# =========================================================
-with st.sidebar:
-    st.image("https://img.icons8.com/fluency/96/truck.png", width=82)
-
-    st.markdown(
-        """
-        <div class="sidebar-panel">
-            <div class="sidebar-title">Control Panel</div>
-            <div class="sidebar-subtitle">
-                Upload VTCS files, tracker files, and geofence locations with a cleaner professional workflow.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    vtcs_file = st.file_uploader("1. VTCS Daily Data", type=["xlsx", "csv"])
-
-    tracking_files = st.file_uploader(
-        "2. Tracker Portal Data",
-        type=["xlsx", "csv"],
-        accept_multiple_files=True,
-        help="Upload separate tracker file for each vehicle. File name should match vehicle name."
-    )
-
-    st.markdown(
-        """
-        <div class="sidebar-panel" style="margin-top:10px;">
-            <div class="sidebar-title">📍 Geofence Config</div>
-            <div class="sidebar-subtitle">
-                Upload TCP / WE coordinates to enable zone checking in the audit log.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    with st.expander("TCP & WE Settings", expanded=True):
-        geo_upload = st.file_uploader("Upload Coordinate File", type=["xlsx", "csv"])
-
-        if geo_upload:
+def get_tracking_file_map(tracking_files):
+    tracking_files_map = {}
+    if tracking_files:
+        for uploaded_file in tracking_files:
             try:
-                raw_geo_df = (
-                    pd.read_excel(geo_upload)
-                    if geo_upload.name.lower().endswith("xlsx")
-                    else pd.read_csv(geo_upload)
-                )
-                st.session_state.geo_data = prepare_geofence_file(raw_geo_df)
-                st.success("Geofence zones linked successfully")
+                temp_df = load_data_file(uploaded_file)
+                temp_df = prepare_tracking_df(temp_df)
+                file_key = normalize_name(uploaded_file.name)
+                tracking_files_map[file_key] = temp_df
             except Exception as e:
-                st.session_state.geo_data = None
-                st.error(f"Geofence file error: {e}")
+                st.warning(f"Could not read tracking file: {uploaded_file.name} | {e}")
+    return tracking_files_map
 
-        if st.session_state.geo_data is not None:
-            st.info(f"Active Zones: {len(st.session_state.geo_data)}")
-            if st.button("🗑️ Reset Zones", use_container_width=True):
-                st.session_state.geo_data = None
-                st.rerun()
 
-# =========================================================
-# MAIN PROCESSING
-# =========================================================
-def process_audit(vtcs_df, tracking_files_map=None):
-    vtcs_df = vtcs_df.copy()
-
-    for col in ["Waste Collected (Kg)", "Before Weight", "After Weight (Kg)"]:
-        if col in vtcs_df.columns:
-            vtcs_df[col] = pd.to_numeric(
-                vtcs_df[col].astype(str).str.replace(",", ""), errors="coerce"
-            )
-
-    vtcs_df["Tonnage"] = vtcs_df["Waste Collected (Kg)"].fillna(0) / 1000
-    vtcs_df["Time In"] = pd.to_datetime(vtcs_df["Time In"], errors="coerce")
-    vtcs_df["Time Out"] = pd.to_datetime(vtcs_df["Time Out"], errors="coerce")
-    vtcs_df["Duration_Mins"] = (
-        vtcs_df["Time Out"] - vtcs_df["Time In"]
-    ).dt.total_seconds() / 60
-
-    vtcs_df["Time_Status"] = vtcs_df["Duration_Mins"].apply(
-        lambda x: "🚨 Suspicious (>30m)" if pd.notna(x) and x > 30 else "✅ Normal"
-    )
+def process_audit(vtcs_df, tracking_files_map=None, geo_data=None):
+    vtcs_df = prepare_vtcs_df(vtcs_df)
 
     gps_audit, zone_check, matched_files = [], [], []
 
@@ -748,11 +795,11 @@ def process_audit(vtcs_df, tracking_files_map=None):
             else:
                 gps_audit.append("❓ Status Missing")
 
-        if st.session_state.geo_data is not None:
+        if geo_data is not None:
             z_found = find_zone_in_precheck_window(
                 track_df=track_df,
                 check_time=t_time,
-                geo_df=st.session_state.geo_data,
+                geo_df=geo_data,
                 window_minutes=60
             )
         else:
@@ -766,69 +813,142 @@ def process_audit(vtcs_df, tracking_files_map=None):
 
     return vtcs_df
 
-# =========================================================
-# APP BODY
-# =========================================================
-if vtcs_file:
-    df_vtcs = (
-        pd.read_excel(vtcs_file)
-        if vtcs_file.name.lower().endswith("xlsx")
-        else pd.read_csv(vtcs_file)
-    )
 
-    tracking_files_map = {}
-    if tracking_files:
-        for uploaded_file in tracking_files:
-            try:
-                temp_df = load_data_file(uploaded_file)
-                temp_df = prepare_tracking_df(temp_df)
-                file_key = normalize_name(uploaded_file.name)
-                tracking_files_map[file_key] = temp_df
-            except Exception as e:
-                st.warning(f"Could not read tracking file: {uploaded_file.name} | {e}")
-
-    results = process_audit(df_vtcs, tracking_files_map if tracking_files_map else None)
-
-    delayed_count = len(results[results["Time_Status"].str.contains("🚨", na=False)])
+def calculate_module_metrics(results, tracking_files_map, geo_data):
+    delayed_count = len(results[results["Time_Status"].astype(str).str.contains("🚨", na=False)])
     gps_conflicts = len(results[results["GPS_Audit"] == "❌ Moving"]) if "GPS_Audit" in results.columns else 0
     avg_trip_time = results["Duration_Mins"].dropna().mean() if "Duration_Mins" in results.columns else 0
     active_vehicles = results["Vehicle"].nunique() if "Vehicle" in results.columns else 0
+    total_tonnage = results["Tonnage"].sum() if "Tonnage" in results.columns else 0
+    trip_count = len(results)
+    verified = len(results[results["GPS_Audit"] == "✅ Verified"]) if "GPS_Audit" in results.columns else 0
+    verified_pct = round((verified / trip_count) * 100, 1) if trip_count else 0
 
-    st.markdown('<div class="kpi-shell">', unsafe_allow_html=True)
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Total Tonnage", f"{results['Tonnage'].sum():.1f} T")
-    k2.metric("Trip Count", len(results))
-    k3.metric("Delayed (>30m)", delayed_count)
-    k4.metric("GPS Conflicts", gps_conflicts if "GPS_Audit" in results.columns else "—")
-    st.markdown('</div>', unsafe_allow_html=True)
+    return {
+        "total_tonnage": total_tonnage,
+        "trip_count": trip_count,
+        "delayed_count": delayed_count,
+        "gps_conflicts": gps_conflicts,
+        "avg_trip_time": 0 if pd.isna(avg_trip_time) else round(avg_trip_time, 1),
+        "active_vehicles": active_vehicles,
+        "tracker_files": len(tracking_files_map),
+        "geofence_status": "Linked" if geo_data is not None else "Not Linked",
+        "verified_pct": verified_pct,
+    }
 
+
+def build_exec_summary(daily_metrics=None, monthly_metrics=None):
+    messages = []
+
+    if daily_metrics:
+        messages.append(
+            f"Daily VTCS review processed <b>{daily_metrics['trip_count']}</b> trips across "
+            f"<b>{daily_metrics['active_vehicles']}</b> active vehicles with <b>{daily_metrics['total_tonnage']:.1f} tons</b> recorded."
+        )
+        messages.append(
+            f"Daily delay exceptions stand at <b>{daily_metrics['delayed_count']}</b>, while GPS verification coverage is <b>{daily_metrics['verified_pct']}%</b>."
+        )
+
+    if monthly_metrics:
+        messages.append(
+            f"Monthly insights processed <b>{monthly_metrics['trip_count']}</b> trips and <b>{monthly_metrics['total_tonnage']:.1f} tons</b>, using the same VTCS audit logic for consistency."
+        )
+        messages.append(
+            f"Monthly operational exceptions show <b>{monthly_metrics['delayed_count']}</b> delayed trips and <b>{monthly_metrics['gps_conflicts']}</b> GPS movement conflicts."
+        )
+
+    if not messages:
+        messages.append(
+            "Upload daily VTCS data or monthly VTCS data to generate management-ready insights, audit observations, and tracking validation."
+        )
+
+    return " ".join(messages)
+
+
+def render_kpi_grid(metrics, prefix=""):
     st.markdown(
         f"""
-        <div class="mini-kpi-grid">
-            <div class="mini-kpi-card mini-kpi-blue">
-                <div class="mini-kpi-label">Active Vehicles</div>
-                <div class="mini-kpi-value">{active_vehicles}</div>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">{prefix} Total Tonnage</div>
+                <div class="kpi-value">{metrics['total_tonnage']:.1f} T</div>
+                <div class="kpi-note">Waste handled during selected module</div>
             </div>
-            <div class="mini-kpi-card mini-kpi-green">
-                <div class="mini-kpi-label">Average Trip Time</div>
-                <div class="mini-kpi-value">{0 if pd.isna(avg_trip_time) else round(avg_trip_time, 1)} mins</div>
+            <div class="kpi-card">
+                <div class="kpi-label">{prefix} Trip Count</div>
+                <div class="kpi-value">{metrics['trip_count']}</div>
+                <div class="kpi-note">Total audited VTCS records</div>
             </div>
-            <div class="mini-kpi-card mini-kpi-orange">
-                <div class="mini-kpi-label">Geofence Status</div>
-                <div class="mini-kpi-value">{"Linked" if st.session_state.geo_data is not None else "Not Linked"}</div>
+            <div class="kpi-card">
+                <div class="kpi-label">{prefix} Delayed Trips</div>
+                <div class="kpi-value">{metrics['delayed_count']}</div>
+                <div class="kpi-note">Trips above 30 minutes</div>
             </div>
-            <div class="mini-kpi-card mini-kpi-slate">
-                <div class="mini-kpi-label">Tracker Files</div>
-                <div class="mini-kpi-value">{len(tracking_files_map)}</div>
+            <div class="kpi-card">
+                <div class="kpi-label">{prefix} GPS Conflicts</div>
+                <div class="kpi-value">{metrics['gps_conflicts']}</div>
+                <div class="kpi-note">Tracker movement mismatch cases</div>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+
+def render_overview_cards(daily_metrics=None, monthly_metrics=None):
+    def safe_value(value, suffix=""):
+        if value is None:
+            return "—"
+        return f"{value}{suffix}"
+
+    st.markdown(
+        f"""
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Daily Trips</div>
+                <div class="kpi-value">{safe_value(daily_metrics['trip_count'] if daily_metrics else None)}</div>
+                <div class="kpi-note">Current uploaded daily VTCS workload</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Monthly Trips</div>
+                <div class="kpi-value">{safe_value(monthly_metrics['trip_count'] if monthly_metrics else None)}</div>
+                <div class="kpi-note">Separate monthly insights workload</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Daily Tonnage</div>
+                <div class="kpi-value">{safe_value(f"{daily_metrics['total_tonnage']:.1f}" if daily_metrics else None, ' T')}</div>
+                <div class="kpi-note">Daily recorded waste quantity</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Monthly Tonnage</div>
+                <div class="kpi-value">{safe_value(f"{monthly_metrics['total_tonnage']:.1f}" if monthly_metrics else None, ' T')}</div>
+                <div class="kpi-note">Monthly recorded waste quantity</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_module(module_title, module_subtitle, results, metrics):
     v_stats = results.groupby("Vehicle").agg({"Tonnage": "sum", "Data ID": "count"}).reset_index()
     v_stats.columns = ["Vehicle", "Tons", "Trips"]
     v_stats["Vehicle_Color"] = v_stats["Vehicle"].apply(vehicle_type_color)
+
+    st.markdown(
+        f"""
+        <div class="module-header">
+            <div>
+                <div class="section-title">{module_title}</div>
+                <div class="section-subtitle">{module_subtitle}</div>
+            </div>
+            <div class="module-badge">Operational module ready</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    render_kpi_grid(metrics)
 
     c1, c2 = st.columns(2)
 
@@ -839,34 +959,34 @@ if vtcs_file:
                 x=v_stats["Vehicle"],
                 y=v_stats["Tons"],
                 marker=dict(
-                    color="#3b82f6",
-                    line=dict(color="#ffffff", width=1.6)
+                    color="#2f7d46",
+                    line=dict(color="#ffffff", width=1.5)
                 ),
                 text=[f"{x:.2f}" for x in v_stats["Tons"]],
                 textposition="outside",
-                textfont=dict(size=12, color="#16304f"),
+                textfont=dict(size=12, color="#163122"),
                 hovertemplate="<b>%{x}</b><br>Tonnage: %{y:.2f} T<extra></extra>",
             )
         )
         tons_fig.update_layout(
-            title="Tonnage by Vehicle",
-            title_font=dict(size=20, color="#143155"),
+            title=f"{module_title} • Tonnage by Vehicle",
+            title_font=dict(size=20, color="#163122"),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="#ffffff",
             margin=dict(l=20, r=20, t=58, b=20),
-            height=450,
+            height=420,
             xaxis=dict(
                 title="Vehicle",
-                tickfont=dict(size=11, color="#47617f"),
-                title_font=dict(size=13, color="#47617f"),
+                tickfont=dict(size=11, color="#476154"),
+                title_font=dict(size=13, color="#476154"),
                 showgrid=False
             ),
             yaxis=dict(
                 title="Tons",
-                tickfont=dict(size=11, color="#47617f"),
-                title_font=dict(size=13, color="#47617f"),
-                gridcolor="#e3edf8",
-                zerolinecolor="#d1dfef"
+                tickfont=dict(size=11, color="#476154"),
+                title_font=dict(size=13, color="#476154"),
+                gridcolor="#e3eee4",
+                zerolinecolor="#d3e4d5"
             ),
             showlegend=False
         )
@@ -880,51 +1000,41 @@ if vtcs_file:
                 y=v_stats["Trips"],
                 marker=dict(
                     color=v_stats["Vehicle_Color"],
-                    line=dict(color="#ffffff", width=1.6)
+                    line=dict(color="#ffffff", width=1.5)
                 ),
                 text=[str(x) for x in v_stats["Trips"]],
                 textposition="outside",
-                textfont=dict(size=12, color="#16304f"),
+                textfont=dict(size=12, color="#163122"),
                 hovertemplate="<b>%{x}</b><br>Trips: %{y}<extra></extra>",
             )
         )
         trips_fig.update_layout(
-            title="Trips by Vehicle",
-            title_font=dict(size=20, color="#143155"),
+            title=f"{module_title} • Trips by Vehicle",
+            title_font=dict(size=20, color="#163122"),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="#ffffff",
             margin=dict(l=20, r=20, t=58, b=20),
-            height=450,
+            height=420,
             xaxis=dict(
                 title="Vehicle",
-                tickfont=dict(size=11, color="#47617f"),
-                title_font=dict(size=13, color="#47617f"),
+                tickfont=dict(size=11, color="#476154"),
+                title_font=dict(size=13, color="#476154"),
                 showgrid=False
             ),
             yaxis=dict(
                 title="Trips",
-                tickfont=dict(size=11, color="#47617f"),
-                title_font=dict(size=13, color="#47617f"),
-                gridcolor="#e3edf8",
-                zerolinecolor="#d1dfef"
+                tickfont=dict(size=11, color="#476154"),
+                title_font=dict(size=13, color="#476154"),
+                gridcolor="#e3eee4",
+                zerolinecolor="#d3e4d5"
             ),
             showlegend=False
         )
         st.plotly_chart(trips_fig, use_container_width=True)
 
-    t1, t2 = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
+    tabs = st.tabs(["📋 Executive Summary", "🔍 Technical Audit Log"])
 
-    with t1:
-        st.markdown(
-            """
-            <div class="soft-card">
-                <p class="soft-card-title">Vehicle Summary</p>
-                <p class="soft-card-subtitle">Management-ready summary with trips, tonnage, and average cycle time by vehicle.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
+    with tabs[0]:
         summ = results.groupby("Vehicle").agg(
             {"Tonnage": "sum", "Data ID": "count", "Duration_Mins": "mean"}
         ).rename(
@@ -939,25 +1049,15 @@ if vtcs_file:
 
         st.dataframe(
             summary_df.style
-            .background_gradient(cmap="Blues", subset=["Total Tons"])
+            .background_gradient(cmap="Greens", subset=["Total Tons"])
             .format({"Total Tons": "{:.2f}", "Avg Mins": "{:.1f}"}),
             use_container_width=True,
-            height=430,
+            height=420,
             hide_index=True,
             column_config=build_column_config(summary_df)
         )
 
-    with t2:
-        st.markdown(
-            """
-            <div class="soft-card">
-                <p class="soft-card-title">Detailed Audit Output</p>
-                <p class="soft-card-subtitle">Complete operational log with tracker matching, GPS audit result, and zone validation.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
+    with tabs[1]:
         cols = ["Vehicle", "Time In", "Time Out", "Duration_Mins", "Tonnage", "Time_Status"]
 
         if "Tracking_File_Match" in results.columns:
@@ -972,21 +1072,194 @@ if vtcs_file:
         st.dataframe(
             audit_df,
             use_container_width=True,
-            height=520,
+            height=500,
             hide_index=True,
             column_config=build_column_config(audit_df)
         )
 
-else:
+
+# =========================================================
+# SESSION STATE
+# =========================================================
+if "geo_data" not in st.session_state:
+    st.session_state.geo_data = None
+
+# =========================================================
+# SIDEBAR
+# =========================================================
+with st.sidebar:
+    if LOGO_BASE64:
+        st.markdown(
+            f'<div style="display:flex;justify-content:center;margin-bottom:12px;"><img src="data:image/jpeg;base64,{LOGO_BASE64}" width="92" style="border-radius:18px;background:white;padding:6px;"></div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown("<div style='font-size:50px;text-align:center;'>♻️</div>", unsafe_allow_html=True)
+
     st.markdown(
         """
-        <div class="soft-card">
-            <p class="soft-card-title">Ready to begin</p>
-            <p class="soft-card-subtitle">
-                Upload VTCS data, tracker files, and geofence locations from the control panel to generate the audit dashboard.
-            </p>
+        <div class="sidebar-panel">
+            <div class="sidebar-title">Professional Control Panel</div>
+            <div class="sidebar-subtitle">
+                Upload daily VTCS, monthly VTCS, tracker portal files, and geofence coordinates through a cleaner and more structured workflow.
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.info("Upload files from the sidebar to start the fleet audit.")
+
+    vtcs_file = st.file_uploader("1. VTCS Daily Data", type=["xlsx", "csv"])
+    monthly_vtcs_file = st.file_uploader("2. VTCS Monthly Insights Data", type=["xlsx", "csv"])
+
+    tracking_files = st.file_uploader(
+        "3. Tracker Portal Data",
+        type=["xlsx", "csv"],
+        accept_multiple_files=True,
+        help="Upload separate tracker file for each vehicle. File name should match vehicle name."
+    )
+
+    st.markdown(
+        """
+        <div class="sidebar-panel" style="margin-top:10px;">
+            <div class="sidebar-title">Geofence Configuration</div>
+            <div class="sidebar-subtitle">
+                Upload TCP / WE coordinates to enable zone checking for both daily and monthly audit modules.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("TCP & WE Settings", expanded=True):
+        geo_upload = st.file_uploader("4. Upload Coordinate File", type=["xlsx", "csv"])
+
+        if geo_upload:
+            try:
+                raw_geo_df = (
+                    pd.read_excel(geo_upload)
+                    if geo_upload.name.lower().endswith("xlsx")
+                    else pd.read_csv(geo_upload)
+                )
+                st.session_state.geo_data = prepare_geofence_file(raw_geo_df)
+                st.success("Geofence zones linked successfully")
+            except Exception as e:
+                st.session_state.geo_data = None
+                st.error(f"Geofence file error: {e}")
+
+        if st.session_state.geo_data is not None:
+            st.info(f"Active Zones: {len(st.session_state.geo_data)}")
+            if st.button("Reset Zones", use_container_width=True):
+                st.session_state.geo_data = None
+                st.rerun()
+
+# =========================================================
+# LOAD TRACKING FILES ONCE
+# =========================================================
+tracking_files_map = get_tracking_file_map(tracking_files)
+
+# =========================================================
+# PROCESS DAILY AND MONTHLY MODULES
+# =========================================================
+daily_results = None
+month_results = None
+
+daily_metrics = None
+monthly_metrics = None
+
+if vtcs_file:
+    df_vtcs = pd.read_excel(vtcs_file) if vtcs_file.name.lower().endswith("xlsx") else pd.read_csv(vtcs_file)
+    daily_results = process_audit(df_vtcs, tracking_files_map if tracking_files_map else None, st.session_state.geo_data)
+    daily_metrics = calculate_module_metrics(daily_results, tracking_files_map, st.session_state.geo_data)
+
+if monthly_vtcs_file:
+    df_month = pd.read_excel(monthly_vtcs_file) if monthly_vtcs_file.name.lower().endswith("xlsx") else pd.read_csv(monthly_vtcs_file)
+    month_results = process_audit(df_month, tracking_files_map if tracking_files_map else None, st.session_state.geo_data)
+    monthly_metrics = calculate_module_metrics(month_results, tracking_files_map, st.session_state.geo_data)
+
+# =========================================================
+# TOP EXECUTIVE SUMMARY
+# =========================================================
+st.markdown('<div class="insight-grid">', unsafe_allow_html=True)
+
+col_left, col_right = st.columns([1.45, 1])
+
+with col_left:
+    st.markdown(
+        f"""
+        <div class="summary-banner">
+            <div class="summary-title">Executive Summary</div>
+            <div class="summary-body">{build_exec_summary(daily_metrics, monthly_metrics)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with col_right:
+    st.markdown(
+        f"""
+        <div class="section-card" style="margin-bottom:0;">
+            <div class="section-title">System Snapshot</div>
+            <div class="section-subtitle">Quick operational status across uploaded modules</div>
+            <div style="height:8px"></div>
+            <div class="kpi-label">Tracker Files Loaded</div>
+            <div class="kpi-value">{len(tracking_files_map)}</div>
+            <div style="height:12px"></div>
+            <div class="kpi-label">Geofence Status</div>
+            <div class="kpi-value">{"Linked" if st.session_state.geo_data is not None else "Not Linked"}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+render_overview_cards(daily_metrics, monthly_metrics)
+
+# =========================================================
+# MODULES
+# =========================================================
+main_tabs = st.tabs(["Daily VTCS Module", "Monthly Insights Module"])
+
+with main_tabs[0]:
+    if daily_results is not None:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        render_module(
+            module_title="Daily VTCS Audit",
+            module_subtitle="Operational daily review using tracker validation, delay checks, and geofence logic.",
+            results=daily_results,
+            metrics=daily_metrics,
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(
+            """
+            <div class="section-card">
+                <div class="section-title">Daily VTCS Audit</div>
+                <div class="section-subtitle">Upload daily VTCS data from the control panel to generate this module.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.info("Upload VTCS Daily Data to activate the Daily VTCS module.")
+
+with main_tabs[1]:
+    if month_results is not None:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        render_module(
+            module_title="Monthly Insights of VTCS",
+            module_subtitle="Separate monthly module using the same logic and functionality as daily VTCS processing.",
+            results=month_results,
+            metrics=monthly_metrics,
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(
+            """
+            <div class="section-card">
+                <div class="section-title">Monthly Insights of VTCS</div>
+                <div class="section-subtitle">Upload monthly VTCS data to run a separate monthly insights workflow with the same audit logic as daily processing.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.info("Upload VTCS Monthly Insights Data to activate the Monthly Insights module.")

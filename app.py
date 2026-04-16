@@ -69,7 +69,7 @@ st.markdown(
         --danger: #bf2f2f;
         --shadow: 0 14px 34px rgba(19, 53, 30, 0.08);
         --shadow-strong: 0 20px 48px rgba(17, 32, 20, 0.14);
-    }}
+    }
 
     .stApp {{
         background:
@@ -77,18 +77,18 @@ st.markdown(
             radial-gradient(circle at top right, rgba(200,155,47,0.07), transparent 18%),
             linear-gradient(180deg, #fbfcfa 0%, #f4f8f2 50%, #eef4ee 100%);
         color: var(--text);
-    }}
+    }
 
     .block-container {{
         max-width: 1540px;
         padding-top: 1.1rem;
         padding-bottom: 2rem;
-    }}
+    }
 
     .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5,
     .stApp p, .stApp label, .stApp div, .stMarkdown {{
         color: var(--text);
-    }}
+    }
 
     section[data-testid="stSidebar"] {{
         background:
@@ -96,7 +96,7 @@ st.markdown(
             radial-gradient(circle at 15% 20%, rgba(200,155,47,0.10), transparent 18%),
             linear-gradient(180deg, var(--sidebar-dark) 0%, var(--sidebar-dark-2) 52%, var(--sidebar-dark-3) 100%);
         border-right: 1px solid rgba(255,255,255,0.10);
-    }}
+    }
 
     section[data-testid="stSidebar"] .stMarkdown,
     section[data-testid="stSidebar"] h1,
@@ -107,7 +107,7 @@ st.markdown(
     section[data-testid="stSidebar"] div,
     section[data-testid="stSidebar"] span {{
         color: #f8fff8 !important;
-    }}
+    }
 
     .hero {{
         position: relative;
@@ -121,14 +121,14 @@ st.markdown(
         border: 1px solid rgba(255,255,255,0.08);
         box-shadow: 0 22px 50px rgba(16, 40, 22, 0.20);
         margin-bottom: 18px;
-    }}
+    }
 
     .hero-grid {{
         display: grid;
         grid-template-columns: 112px 1fr;
         gap: 20px;
         align-items: center;
-    }}
+    }
 
     .hero-logo {{
         width: 104px;
@@ -141,14 +141,14 @@ st.markdown(
         justify-content: center;
         box-shadow: 0 14px 28px rgba(0,0,0,0.14);
         padding: 8px;
-    }}
+    }
 
     .hero-logo img {{
         width: 100%;
         height: 100%;
         object-fit: contain;
         border-radius: 18px;
-    }}
+    }
 
     .hero-badge {{
         display: inline-flex;
@@ -162,7 +162,7 @@ st.markdown(
         font-size: 0.82rem;
         font-weight: 800;
         margin-bottom: 14px;
-    }}
+    }
 
     .hero-title {{
         font-size: 2.35rem;
@@ -171,21 +171,21 @@ st.markdown(
         font-weight: 900;
         color: #ffffff !important;
         letter-spacing: -0.02em;
-    }}
+    }
 
     .hero-subtitle {{
         margin-top: 12px;
         color: #e4f1e7 !important;
         font-size: 1.01rem;
         max-width: 960px;
-    }}
+    }
 
     .hero-meta {{
         margin-top: 16px;
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
-    }}
+    }
 
     .hero-chip {{
         display: inline-flex;
@@ -198,7 +198,7 @@ st.markdown(
         background: rgba(255,255,255,0.10);
         border: 1px solid rgba(255,255,255,0.14);
         color: #f7fff9 !important;
-    }}
+    }
 
     .section-card {{
         background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
@@ -207,7 +207,7 @@ st.markdown(
         padding: 18px 20px;
         box-shadow: var(--shadow);
         margin-bottom: 18px;
-    }}
+    }
 
     .section-header {{
         display: flex;
@@ -216,7 +216,7 @@ st.markdown(
         gap: 16px;
         margin-bottom: 14px;
         flex-wrap: wrap;
-    }}
+    }
 
     .section-title {
         font-size: 1.28rem;
@@ -224,20 +224,20 @@ st.markdown(
         margin: 0;
         color: var(--text) !important;
         letter-spacing: -0.01em;
-    }}
+    }
 
     .section-subtitle {{
         margin: 4px 0 0 0;
         color: var(--muted) !important;
         font-size: 0.94rem;
-    }}
+    }
 
     .insight-grid {{
         display: grid;
         grid-template-columns: 1.45fr 1fr;
         gap: 16px;
         margin-bottom: 18px;
-    }}
+    }
 
     .summary-banner {{
         background: linear-gradient(135deg, #f7fbf7 0%, #edf6ee 100%);
@@ -245,27 +245,27 @@ st.markdown(
         border-radius: 22px;
         padding: 18px 18px 12px 18px;
         box-shadow: 0 12px 28px rgba(19, 53, 30, 0.06);
-    }}
+    }
 
     .summary-title {{
         font-size: 1.05rem;
         font-weight: 900;
         margin-bottom: 6px;
         color: #173122 !important;
-    }}
+    }
 
     .summary-body {{
         color: #52685c !important;
         font-size: 0.94rem;
         line-height: 1.65;
-    }}
+    }
 
     .kpi-grid {{
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 14px;
         margin-top: 6px;
-    }}
+    }
 
     .kpi-card {
         border-radius: 20px;
@@ -291,26 +291,26 @@ st.markdown(
     .kpi-card:nth-child(4) {
         background: linear-gradient(180deg, #f2f7fb 0%, #eaf1f8 100%);
         border: 1px solid #dbe6f0;
-    }}
+    }
 
     .kpi-label {{
         font-size: 0.84rem;
         font-weight: 800;
         color: #688073 !important;
         margin-bottom: 8px;
-    }}
+    }
 
     .kpi-value {{
         font-size: 1.55rem;
         font-weight: 900;
         color: #143022 !important;
-    }}
+    }
 
     .kpi-note {{
         margin-top: 8px;
         font-size: 0.78rem;
         color: #6e8376 !important;
-    }}
+    }
 
     .module-header {{
         display: flex;
@@ -319,7 +319,7 @@ st.markdown(
         flex-wrap: wrap;
         gap: 10px;
         margin-bottom: 14px;
-    }}
+    }
 
     .module-badge {{
         display: inline-flex;
@@ -332,7 +332,7 @@ st.markdown(
         color: #225b35 !important;
         font-size: 0.82rem;
         font-weight: 800;
-    }}
+    }
 
     div[data-testid="metric-container"] {{
         background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
@@ -340,20 +340,20 @@ st.markdown(
         border-radius: 20px;
         padding: 22px 18px;
         box-shadow: 0 12px 28px rgba(16, 40, 22, 0.06);
-    }}
+    }
 
     div[data-testid="metric-container"] label {{
         color: #688073 !important;
         font-weight: 800 !important;
         font-size: 0.95rem !important;
-    }}
+    }
 
     div[data-testid="metric-container"] div[data-testid="stMetricValue"] {{
         color: #113021 !important;
         font-weight: 900 !important;
         font-size: 2.15rem !important;
         letter-spacing: -0.02em;
-    }}
+    }
 
     [data-testid="stFileUploader"] section {{
         background: rgba(255,255,255,0.98) !important;
@@ -361,14 +361,14 @@ st.markdown(
         border: 2px dashed #b7d1bc !important;
         padding: 10px !important;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
-    }}
+    }
 
     [data-testid="stFileUploader"] section p,
     [data-testid="stFileUploader"] section span,
     [data-testid="stFileUploader"] small,
     [data-testid="stFileUploader"] section div {{
         color: #173122 !important;
-    }}
+    }
 
     .stButton > button,
     [data-testid="stFileUploader"] button {{
@@ -379,13 +379,13 @@ st.markdown(
         font-weight: 850 !important;
         padding: 0.72rem 1rem !important;
         box-shadow: 0 10px 22px rgba(47, 125, 70, 0.14) !important;
-    }}
+    }
 
     .stButton > button:hover,
     [data-testid="stFileUploader"] button:hover {{
         transform: translateY(-1px);
         box-shadow: 0 14px 26px rgba(47, 125, 70, 0.20) !important;
-    }}
+    }
 
     .sidebar-panel {{
         background: rgba(255,255,255,0.10);
@@ -395,21 +395,21 @@ st.markdown(
         margin-bottom: 14px;
         backdrop-filter: blur(8px);
         box-shadow: 0 12px 24px rgba(10, 24, 12, 0.18);
-    }}
+    }
 
     .sidebar-title {{
         font-size: 1rem;
         font-weight: 900;
         color: #ffffff !important;
         margin-bottom: 6px;
-    }}
+    }
 
     .sidebar-subtitle {{
         font-size: 0.87rem;
         color: #e4f4e8 !important;
         margin-bottom: 6px;
         line-height: 1.45;
-    }}
+    }
 
     .stTabs [data-baseweb="tab-list"] {{
         gap: 10px;
@@ -417,7 +417,7 @@ st.markdown(
         border: 1px solid #d7e5d8;
         padding: 8px;
         border-radius: 18px;
-    }}
+    }
 
     .stTabs [data-baseweb="tab"] {
         height: 54px;
@@ -427,14 +427,14 @@ st.markdown(
         font-size: 1.04rem;
         background: transparent;
         padding: 0 18px;
-    }}
+    }
 
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, #eef7ef, #f7fbf7) !important;
         border: 1px solid #cfe0d1 !important;
         color: #1e5b33 !important;
         box-shadow: 0 8px 18px rgba(47, 125, 70, 0.10);
-    }}
+    }
 
     div[data-testid="stDataFrame"] {{
         border: 1px solid #dbe7dd;
@@ -442,39 +442,39 @@ st.markdown(
         overflow: hidden;
         box-shadow: var(--shadow);
         background: #ffffff;
-    }}
+    }
 
     .stAlert {{
         border-radius: 16px !important;
         border: 1px solid #d7e5d8 !important;
-    }}
+    }
 
     @media (max-width: 1200px) {{
         .insight-grid {{
             grid-template-columns: 1fr;
-        }}
-    }}
+        }
+    }
 
     @media (max-width: 900px) {{
         .hero-grid {{
             grid-template-columns: 1fr;
-        }}
+        }
 
         .hero-logo {{
             width: 92px;
             height: 92px;
-        }}
+        }
 
         .kpi-grid {{
             grid-template-columns: repeat(2, minmax(0, 1fr));
-        }}
-    }}
+        }
+    }
 
     @media (max-width: 700px) {{
         .kpi-grid {{
             grid-template-columns: 1fr;
-        }}
-    }}
+        }
+    }
     </style>
     """,
     unsafe_allow_html=True,

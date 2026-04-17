@@ -566,12 +566,12 @@ def find_matching_tracking_df(vehicle_name, tracking_files_map):
     return None
 
 
-def has_t_in_name(vehicle_name):
-    return "T" in str(vehicle_name).upper()
+def has_tt_in_name(vehicle_name):
+    return "TT" in str(vehicle_name).upper()
 
 
 def vehicle_type_color(vehicle_name):
-    return "#22c55e" if has_t_in_name(vehicle_name) else "#3b82f6"
+    return "#22c55e" if has_tt_in_name(vehicle_name) else "#3b82f6"
 
 
 def find_zone_in_precheck_window(track_df, check_time, geo_df, window_minutes=60):
@@ -844,7 +844,7 @@ def render_module(module_title, module_subtitle, results, metrics):
             go.Bar(
                 x=v_stats["Vehicle"],
                 y=v_stats["Tons"],
-                marker=dict(color="#3b82f6", line=dict(color="#ffffff", width=1.5)),
+                marker=dict(color=v_stats["Vehicle_Color"], line=dict(color="#ffffff", width=1.5)),
                 text=[f"{x:.2f}" for x in v_stats["Tons"]],
                 textposition="outside",
                 textfont=dict(size=12, color="#163122"),

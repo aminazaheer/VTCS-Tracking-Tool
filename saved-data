@@ -1,0 +1,4 @@
+trackers/
+│     ├── daily_vtcs.csv
+│     ├── monthly_vtcs.csv
+│     ├── geo.json

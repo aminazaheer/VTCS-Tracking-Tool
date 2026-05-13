@@ -8,6 +8,83 @@ import re
 import base64
 
 # =========================================================
+# 🔐 ADD-ON: DATA PERSISTENCE MODULE (NO UI CHANGES)
+# =========================================================
+
+from pathlib import Path
+import os
+import shutil
+import json
+
+# ---------- Storage Paths ----------
+DATA_DIR = Path("saved_data")
+TRACKER_DIR = DATA_DIR / "tracker_files"
+DATA_DIR.mkdir(exist_ok=True)
+TRACKER_DIR.mkdir(parents=True, exist_ok=True)
+
+DAILY_PATH = DATA_DIR / "daily_vtcs.csv"
+MONTHLY_PATH = DATA_DIR / "monthly_vtcs.csv"
+GEO_PATH = DATA_DIR / "geo.json"
+
+
+# ---------- SAVE HELPERS ----------
+def _save_csv(df, path):
+    try:
+        if df is not None:
+            df.to_csv(path, index=False)
+    except:
+        pass
+
+
+def _load_csv(path):
+    try:
+        if path.exists():
+            return pd.read_csv(path)
+    except:
+        return None
+    return None
+
+
+def _save_geo(df):
+    try:
+        if df is not None:
+            df.to_json(GEO_PATH, orient="records")
+    except:
+        pass
+
+
+def _load_geo():
+    try:
+        if GEO_PATH.exists():
+            return pd.read_json(GEO_PATH)
+    except:
+        return None
+    return None
+
+
+def _clear_all_data():
+    try:
+        if DATA_DIR.exists():
+            shutil.rmtree(DATA_DIR)
+        DATA_DIR.mkdir(exist_ok=True)
+        TRACKER_DIR.mkdir(parents=True, exist_ok=True)
+    except:
+        pass
+
+
+# =========================================================
+# 🔁 AUTO LOAD (NO UI IMPACT)
+# =========================================================
+if "persist_daily" not in st.session_state:
+    st.session_state.persist_daily = _load_csv(DAILY_PATH)
+
+if "persist_monthly" not in st.session_state:
+    st.session_state.persist_monthly = _load_csv(MONTHLY_PATH)
+
+if "persist_geo" not in st.session_state:
+    st.session_state.persist_geo = _load_geo()
+
+# =========================================================
 # PAGE CONFIG
 # =========================================================
 st.set_page_config(
@@ -986,6 +1063,8 @@ st.markdown(
 # =========================================================
 # SIDEBAR
 # =========================================================
+
+
 with st.sidebar:
     if LOGO_BASE64:
         st.markdown(
@@ -1008,7 +1087,20 @@ with st.sidebar:
     )
 
     vtcs_file = st.file_uploader("1. VTCS Daily Data", type=["xlsx", "csv"])
+    st.session_state.persist_daily = df_vtcs
+_save_csv(df_vtcs, DAILY_PATH)
+if vtcs_file is None and st.session_state.persist_daily is not None:
+    df_vtcs = st.session_state.persist_daily
+    
     monthly_vtcs_file = st.file_uploader("2. VTCS Monthly Insights Data", type=["xlsx", "csv"])
+    st.session_state.persist_monthly = df_month
+_save_csv(df_month, MONTHLY_PATH)
+if monthly_vtcs_file is None and st.session_state.persist_monthly is not None:
+    df_month = st.session_state.persist_monthly
+    st.session_state.persist_geo = st.session_state.geo_data
+_save_geo(st.session_state.geo_data)
+if st.session_state.geo_data is None:
+    st.session_state.geo_data = st.session_state.persist_geo
     tracking_files = st.file_uploader(
         "3. Tracker Portal Data",
         type=["xlsx", "csv"],
@@ -1044,6 +1136,13 @@ with st.sidebar:
             if st.button("Reset Zones", use_container_width=True):
                 st.session_state.geo_data = None
                 st.rerun()
+
+if st.button("🗑️ Remove Previous Data", use_container_width=True):
+    _clear_all_data()
+    st.session_state.persist_daily = None
+    st.session_state.persist_monthly = None
+    st.session_state.persist_geo = None
+    st.rerun()
 
 # =========================================================
 # MAIN
